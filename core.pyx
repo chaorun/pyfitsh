@@ -1100,16 +1100,16 @@ cdef class Fistar:
 
         # parse PSF string
         self._psf_hsize = 4; self._psf_grid = 4; self._psf_order = 0
-        self._psf_type = 0; self._psf_symm = 0; self._psf_biquad = 0
+        self._psf_type = 1; self._psf_symm = 0; self._psf_biquad = 0
         self._psf_ikappa = 0.0; self._psf_cwidth = 0.0; self._psf_corder = 0
         if psf and isinstance(psf, str):
             for kv in psf.split(','):
                 k, _, v = kv.partition('=')
                 k = k.strip()
-                if k == 'native': self._psf_type = 0
-                elif k == 'integral': self._psf_type = 1
-                elif k == 'circle': self._psf_type = 2
-                elif k == 'biquad' or k == 'spline': self._psf_type = 0; self._psf_biquad = 1
+                if k == 'native': self._psf_type = 1
+                elif k == 'integral': self._psf_type = 2
+                elif k == 'circle': self._psf_type = 3
+                elif k == 'biquad' or k == 'spline': self._psf_type = 1; self._psf_biquad = 1
                 elif k == 'order': self._psf_order = int(v)
                 elif k == 'grid': self._psf_grid = int(v)
                 elif k == 'halfsize': self._psf_hsize = int(v)
@@ -1235,7 +1235,7 @@ cdef class Fistar:
 
         if self._fields: wanted = set(self._fields.split(','))
         else: wanted = {'id','ix','iy','cx','cy','cbg','camp','cmax','npix','cs','cd','ck',
-                        'x','y','bg','amp','s','d','k','l','mom',
+                        'x','y','bg','amp','s','d','k','mom','l',
                         'sigma','delta','kappa','fwhm','ellip','pa',
                         'flux','noise','sn','magnitude',
                         'px','py','pbg','pamp','ps','pd','pk','pl'}
@@ -1265,8 +1265,8 @@ cdef class Fistar:
             if 's' in wanted: result['s'] = np.array([res.s[i] for i in range(nstar)])
             if 'd' in wanted: result['d'] = np.array([res.d[i] for i in range(nstar)])
             if 'k' in wanted: result['k'] = np.array([res.k[i] for i in range(nstar)])
-            if 'l' in wanted: result['l'] = np.array([res.l[i] for i in range(nstar)])
             if 'mom' in wanted: result['mom'] = np.array([res.mom[i * 15] for i in range(nstar)])
+            if 'l' in wanted: result['l'] = np.array([res.l[i] for i in range(nstar)])
             if 'sigma' in wanted: result['sigma'] = np.array([res.sigma[i] for i in range(nstar)])
             if 'delta' in wanted: result['delta'] = np.array([res.delta[i] for i in range(nstar)])
             if 'kappa' in wanted: result['kappa'] = np.array([res.kappa[i] for i in range(nstar)])

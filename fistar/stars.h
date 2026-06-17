@@ -121,6 +121,8 @@ typedef struct
 					/* Set by fit functions, and used    */
 					/* by firandom also.		     */
 
+	int		id;		/* 检测序号，用于输出 I_ID 列        */
+
 	int		marked;		/* A flag for cleanup_starlist().    */
 
 	candidate	*cand;		/* candidate pointer (if available). */
@@ -140,7 +142,7 @@ typedef struct
 typedef struct
  {	int	model;	/* can be SHAPE_{GAUSS,ELLIPTIC,DEVIATED}	     */
 	int	order;	/* up to MAX_DEVIATION_ORDER, only for SHAPE_DEVIATED*/
-/*	double	igs;*/	/*�initial value of the 'gs' starshape parameter     */
+/*	double	igs;*/	/*�initial value of the 'gs' starshape parameter     */
  } starmodelfit;
 
 /* star-base.c */ /***********************************************************/

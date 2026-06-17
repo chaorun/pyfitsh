@@ -540,7 +540,44 @@ int fistar_search_cy(
         pdparam.param.circle.order = psf_circle_order;
         memset(&tpd, 0, sizeof(tpd));
 
+        // /* dump: ALL params PRE-call */
+        // { FILE *df = fopen("/Users/chaorun/Code/Githubs/fitsh-0.9.4/testgrmatch/tmp/dump_cy_pre.bin","wb");
+        //   if(df){
+        //     fwrite(&img, sizeof(img), 1, df);
+        //     { int isx=img.sx, isy=img.sy; int ir; double **id=img.data;
+        //       for(ir=0;ir<isy;ir++) fwrite(id[ir], sizeof(double), isx, df); }
+        //     { int isx=img.sx, isy=img.sy; int ir;
+        //       for(ir=0;ir<isy;ir++) fwrite(mask[ir], 1, isx, df); }
+        //     { FILE *df = fopen("/Users/chaorun/Code/Githubs/fitsh-0.9.4/testgrmatch/tmp/dump_cy_pre_ss.bin","wb");
+        //       if(df){ fwrite(&ss, sizeof(ss), 1, df);
+        //         if(ss.stars && ss.nstar>0) fwrite(ss.stars, sizeof(*ss.stars), ss.nstar, df);
+        //         if(ss.cands && ss.ncand>0) fwrite(ss.cands, sizeof(*ss.cands), ss.ncand, df);
+        //         fclose(df); } }
+        //     { FILE *df = fopen("/Users/chaorun/Code/Githubs/fitsh-0.9.4/testgrmatch/tmp/dump_cy_pre_pd.bin","wb");
+        //       if(df){ fwrite(&pdparam, sizeof(pdparam), 1, df); fclose(df); } }
+        //     { FILE *df = fopen("/Users/chaorun/Code/Githubs/fitsh-0.9.4/testgrmatch/tmp/dump_cy_pre_tpd.bin","wb");
+        //       if(df){ fwrite(&tpd, sizeof(tpd), 1, df); fclose(df); } }
+        //     fclose(df); }
+        // }
+
         fistar_determine_psf(&img, mask, &ss, &pdparam, &tpd);
+
+        // /* dump: ALL params POST-call */
+        // { FILE *df = fopen("/Users/chaorun/Code/Githubs/fitsh-0.9.4/testgrmatch/tmp/dump_cy_post.bin","wb");
+        //   if(df){
+        //     fwrite(&tpd, sizeof(tpd), 1, df);
+        //     if(tpd.coeff){
+        //       int nv=(tpd.order+1)*(tpd.order+2)/2;
+        //       int ns=tpd.grid*(2*tpd.hsize+1);
+        //       int ik,ii,ij;
+        //       fwrite(&nv,4,1,df); fwrite(&ns,4,1,df);
+        //       for(ik=0;ik<nv;ik++) for(ii=0;ii<ns;ii++) for(ij=0;ij<ns;ij++){ double td=tpd.coeff[ik][ii][ij]; fwrite(&td,8,1,df); }
+        //     } else { int zero=0; fwrite(&zero,4,1,df); fwrite(&zero,4,1,df); }
+        //     { int di; int ns=nstar;
+        //       fwrite(&ns,4,1,df);
+        //       for(di=0;di<ns;di++){ fwrite(&stars[di].psf.gcx,8,1,df); fwrite(&stars[di].psf.gcy,8,1,df); fwrite(&stars[di].psf.gbg,8,1,df); fwrite(&stars[di].psf.gamp,8,1,df); } }
+        //     fclose(df); }
+        // }
     }
 
     /* ---- extract PSF output ---- */
@@ -602,6 +639,9 @@ int fistar_search_cy(
     }
 
     /* ---- sort if requested ---- */
+    /* 在排序前赋检测序号，排序后保留原始 ID */
+    for (i = 0; i < nstar; i++) stars[i].id = i + 1;
+
     if (sort >= 0 && nstar > 0) {
         int *indx = (int *)malloc(sizeof(int) * nstar);
         for (i = 0; i < nstar; i++) indx[i] = i;
@@ -662,7 +702,7 @@ int fistar_search_cy(
         star     *ws  = &stars[i];
         candidate *wc = ws->cand;
 
-        result->id[i]   = i + 1;
+        result->id[i]   = ws->id;
 
         /* candidate fields */
         result->ix[i]   = wc ? wc->ix + 1 : 0;

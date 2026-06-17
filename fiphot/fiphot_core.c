@@ -1894,15 +1894,15 @@ int fiphot_photometry_from_raw_cy(
 
     read_raw_photometry_cy(&ps, &np, raw_data, nstar, nap, ref_mag_arr, ref_col_arr, ref_err_arr);
 
-    { FILE *_df = fopen("/Users/chaorun/Code/Githubs/fitsh-0.9.4/testgrmatch/tmp/cy_do_sub_dump.bin", "wb");
-      if (_df) { _dump_do_sub_input(_df, sx, sy, img.data, mk, ps, np, NULL, nap, &sg, correlation_length, &xpp, kl, normalize_kernel); fclose(_df); }
-    }
+    // { FILE *_df = fopen("/Users/chaorun/Code/Githubs/fitsh-0.9.4/testgrmatch/tmp/cy_do_sub_dump.bin", "wb");
+    //   if (_df) { _dump_do_sub_input(_df, sx, sy, img.data, mk, ps, np, NULL, nap, &sg, correlation_length, &xpp, kl, normalize_kernel); fclose(_df); }
+    // }
 
     r = do_subtracted_photometry(&img, mk, ps, np, NULL, nap, &sg, correlation_length, &xpp, kl, normalize_kernel);
 
-    { FILE *_df = fopen("/Users/chaorun/Code/Githubs/fitsh-0.9.4/testgrmatch/tmp/cy_do_sub_dump.bin", "ab");
-      if (_df) { _dump_do_sub_output(_df, ps, np); fclose(_df); }
-    }
+    // { FILE *_df = fopen("/Users/chaorun/Code/Githubs/fitsh-0.9.4/testgrmatch/tmp/cy_do_sub_dump.bin", "ab");
+    //   if (_df) { _dump_do_sub_output(_df, ps, np); fclose(_df); }
+    // }
 
     if (r == 0)
         fiphot_fill_photometry_output(ps, np, nap, out_flux, out_fluxerr, out_bgarea, out_bgflux, out_bgmedian, out_bgsigma, out_cntr_x, out_cntr_y, out_cntr_width, out_cntr_w_d, out_cntr_w_k, out_cntr_x_err, out_cntr_y_err, out_cntr_w_err, out_flag, out_rtot, out_rbad, out_rign, out_atot, out_abad, NULL, NULL, NULL);

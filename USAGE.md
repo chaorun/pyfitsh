@@ -95,6 +95,8 @@ r = fs.do_fistar(img_data, mask=mask_data)
 ```
 
 > **已知问题**：gauss 模型下 `l`、`sigma`、`delta`、`kappa`、`fwhm`、`pa`、`flux`、`noise`、`sn` 列与 CLI 输出有差异。根因疑为 `star-model.c` 中 `shape.gl` 赋值逻辑——该文件与 origincode 一致，但 CLI 在 PSF 拟合后更新了 `shape.gl`，Cython 端未同步。`x`、`y`、`bg`、`amp`、`s`、`d`、`k` 完全一致。（挂起）
+> 
+> **已修复**：PSF type 常量偏移 bug（`_psf_type` 赋值 `native→0` 应为 `native→1`，`integral→1` 应为 `integral→2`，`circle→2` 应为 `circle→3`），该 bug 导致 `pbg`/`pamp` 列为 nan。修复后 `pbg`/`pamp` 与 CLI 输出一致。（2026-06-17）
 
 ---
 
