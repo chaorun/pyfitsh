@@ -629,323 +629,325 @@ static void ficonv_dump_mask(char *stage, char **mask, int sx, int sy)
 }
 */
 
-/*****************************************************************************/
-/* flat-array entry point                                                    */
-/*****************************************************************************/
+// /*****************************************************************************/
+// /* flat-array entry point                                                    */
+// /*****************************************************************************/
+//
+// /* externs from other compilation units */
+// extern int kernel_init_images(kernellist *kl);
+// extern int create_kernels_from_kernelarg(char *kernelarg, kernellist *kl);
+// extern int fit_kernel_poly_coefficients_block(image *refimg, image *img,
+//     char **mask, double **weight, int nbx, int nby,
+//     kernellist *klist, kernellist *xlist);
+// extern int convolve_with_kernel_set(image *refimg, char **mask,
+//     kernellist *klist, image *outimg);
+// extern int convolve_to_subtracted(image *ref, image *img, char **mask,
+//     kernellist *klist, kernellist *xlist, image *outimg);
 
-/* externs from other compilation units */
-extern int kernel_init_images(kernellist *kl);
-extern int create_kernels_from_kernelarg(char *kernelarg, kernellist *kl);
-extern int fit_kernel_poly_coefficients_block(image *refimg, image *img,
-    char **mask, double **weight, int nbx, int nby,
-    kernellist *klist, kernellist *xlist);
-extern int convolve_with_kernel_set(image *refimg, char **mask,
-    kernellist *klist, image *outimg);
-extern int convolve_to_subtracted(image *ref, image *img, char **mask,
-    kernellist *klist, kernellist *xlist, image *outimg);
+// int ficonv_fit_cy(
+//     double *ref_data, char *ref_mask,
+//     double *img_data, char *img_mask,
+//     char *inmask_data,
+//     int sx, int sy,
+//     char *kernel_spec,
+//     int method,
+//     int bdc,
+//     int niter, double rejlevel, double gain,
+//     int is_verbose_arg,
+//     double *cnv_data, char *cnv_mask,
+//     double *sub_data,
+//     double *add_data,
+//     int unity_kernels,
+//     char **kernel_list_out,
+//     char *stamp_arg,
+//     int psx, int psy, char *spline_stamp_arg,
+//     int prefit_nkernels,
+//     int *prefit_types,
+//     int *prefit_orders,
+//     int *prefit_ncoeffs,
+//     double *prefit_coeffs,
+//     double prefit_ox, double prefit_oy, double prefit_scale)
+// {
+//  int	i,r = 0;
+//  image	refimg, img, outimg;
+//  char		**mr, **mi, **mo, **inmask = NULL;
+//  kernellist	kl_data, xl_data, *kl = &kl_data, *xl = &xl_data;
+//
+//  progbasename = "fitsh_cy.ficonv";
+//  is_verbose = is_verbose_arg;
+//  is_comment = 0;
+//
+//  refimg.sx = sx; refimg.sy = sy;
+//  refimg.data = malloc(sy * sizeof(double *));
+//  for (i=0; i<sy; i++) refimg.data[i] = ref_data + i * sx;
+//
+//  img.sx = sx; img.sy = sy;
+//  img.data = malloc(sy * sizeof(double *));
+//  for (i=0; i<sy; i++) img.data[i] = img_data + i * sx;
+//
+//  outimg.sx = sx; outimg.sy = sy;
+//  outimg.data = malloc(sy * sizeof(double *));
+//  for (i=0; i<sy; i++) outimg.data[i] = cnv_data + i * sx;
+//
+//  mr = malloc(sy * sizeof(char *));
+//  for (i=0; i<sy; i++) mr[i] = ref_mask + i * sx;
+//  mi = malloc(sy * sizeof(char *));
+//  for (i=0; i<sy; i++) mi[i] = img_mask + i * sx;
+//  mo = malloc(sy * sizeof(char *));
+//  for (i=0; i<sy; i++) mo[i] = cnv_mask + i * sx;
+//   if (inmask_data) {
+//       inmask = malloc(sy * sizeof(char *));
+//       for (i=0; i<sy; i++) inmask[i] = inmask_data + i * sx;
+//   }
+//   if (stamp_arg && stamp_arg[0]) {
+//       if (!inmask) {
+//           inmask = mask_create_empty(sx, sy);
+//       }
+//       stamp_parse_argument(stamp_arg, inmask, sx, sy);
+//   }
+//
+//   /* pre-spline affine correction */
+//   if (psx > 0 && psy > 0) {
+//       char **spfmask;
+//       double *coeff;
+//       if (spline_stamp_arg && spline_stamp_arg[0]) {
+//           spfmask = mask_create_empty(sx, sy);
+//           stamp_parse_argument(spline_stamp_arg, spfmask, sx, sy);
+//       } else {
+//           spfmask = mask_create_empty(sx, sy);
+//       }
+//       if (inmask != NULL) mask_and(spfmask, sx, sy, inmask);
+//       mask_and(spfmask, sx, sy, mr);
+//       mask_and(spfmask, sx, sy, mi);
+//       coeff = malloc(sizeof(double) * 2 * (psx+1) * (psy+1));
+//       affine_img_transformation_spline_fit(&img, &refimg, spfmask, psx, psy, coeff);
+//       affine_img_transformation_spline_eval(&img, mi, psx, psy, coeff);
+//       free(coeff);
+//       mask_free(spfmask);
+//   }
 
-int ficonv_fit_cy(
-    double *ref_data, char *ref_mask,
-    double *img_data, char *img_mask,
-    char *inmask_data,
-    int sx, int sy,
-    char *kernel_spec,
-    int method,
-    int bdc,
-    int niter, double rejlevel, double gain,
-    int is_verbose_arg,
-    double *cnv_data, char *cnv_mask,
-    double *sub_data,
-    double *add_data,
-    int unity_kernels,
-    char **kernel_list_out,
-    char *stamp_arg,
-    int psx, int psy, char *spline_stamp_arg,
-    int prefit_nkernels,
-    int *prefit_types,
-    int *prefit_orders,
-    int *prefit_ncoeffs,
-    double *prefit_coeffs,
-    double prefit_ox, double prefit_oy, double prefit_scale)
-{
- int	i,r = 0;
- image	refimg, img, outimg;
- char		**mr, **mi, **mo, **inmask = NULL;
- kernellist	kl_data, xl_data, *kl = &kl_data, *xl = &xl_data;
-
- progbasename = "fitsh_cy.ficonv";
- is_verbose = is_verbose_arg;
- is_comment = 0;
-
- refimg.sx = sx; refimg.sy = sy;
- refimg.data = malloc(sy * sizeof(double *));
- for (i=0; i<sy; i++) refimg.data[i] = ref_data + i * sx;
-
- img.sx = sx; img.sy = sy;
- img.data = malloc(sy * sizeof(double *));
- for (i=0; i<sy; i++) img.data[i] = img_data + i * sx;
-
- outimg.sx = sx; outimg.sy = sy;
- outimg.data = malloc(sy * sizeof(double *));
- for (i=0; i<sy; i++) outimg.data[i] = cnv_data + i * sx;
-
- mr = malloc(sy * sizeof(char *));
- for (i=0; i<sy; i++) mr[i] = ref_mask + i * sx;
- mi = malloc(sy * sizeof(char *));
- for (i=0; i<sy; i++) mi[i] = img_mask + i * sx;
- mo = malloc(sy * sizeof(char *));
- for (i=0; i<sy; i++) mo[i] = cnv_mask + i * sx;
-  if (inmask_data) {
-      inmask = malloc(sy * sizeof(char *));
-      for (i=0; i<sy; i++) inmask[i] = inmask_data + i * sx;
-  }
-  if (stamp_arg && stamp_arg[0]) {
-      if (!inmask) {
-          inmask = mask_create_empty(sx, sy);
-      }
-      stamp_parse_argument(stamp_arg, inmask, sx, sy);
-  }
-
-  /* pre-spline affine correction */
-  if (psx > 0 && psy > 0) {
-      char **spfmask;
-      double *coeff;
-      if (spline_stamp_arg && spline_stamp_arg[0]) {
-          spfmask = mask_create_empty(sx, sy);
-          stamp_parse_argument(spline_stamp_arg, spfmask, sx, sy);
-      } else {
-          spfmask = mask_create_empty(sx, sy);
-      }
-      if (inmask != NULL) mask_and(spfmask, sx, sy, inmask);
-      mask_and(spfmask, sx, sy, mr);
-      mask_and(spfmask, sx, sy, mi);
-      coeff = malloc(sizeof(double) * 2 * (psx+1) * (psy+1));
-      affine_img_transformation_spline_fit(&img, &refimg, spfmask, psx, psy, coeff);
-      affine_img_transformation_spline_eval(&img, mi, psx, psy, coeff);
-      free(coeff);
-      mask_free(spfmask);
-  }
-
-  memset(kl, 0, sizeof(kernellist));
- memset(xl, 0, sizeof(kernellist));
-  /* 两条路径互斥：预拟合数据（来自 kernel_dict）与内核规格字符串（-k 参数） */
-  if (prefit_nkernels <= 0      /* 无预拟合数据                            */
-      && kernel_spec             /* 内核规格字符串已提供                    */
-      && create_kernels_from_kernelarg(kernel_spec, kl))  /* 解析规格构建 klist */
-   {	r = 1; goto cleanup; }
-
- kl->type = 0;
-
- for (i=0 ; i<kl->nkernel ; i++)
- 	kl->kernels[i].target = 0;
-
- xl->nkernel = 0;
- xl->kernels = NULL;
-
-  logmsg(is_verbose>=1, "Number of kernels: %d.\n", kl->nkernel);
-
-  /* DUMP: kernel_init_images input (commented out)
-   { char p[512]; FILE *df; int ki, oo, nv;
-     snprintf(p,sizeof(p),"%s/pipe_kernelinit_in.bin",
-       "/Users/chaorun/Code/Githubs/fitsh-0.9.4/testgrmatch/tmp");
-     df=fopen(p,"wb"); if(df){
-       fwrite(&kl->nkernel,4,1,df);
-       fwrite(&kl->ox,8,1,df); fwrite(&kl->oy,8,1,df); fwrite(&kl->scale,8,1,df);
-       fwrite(&kl->type,4,1,df);
-       for(ki=0;ki<kl->nkernel;ki++){
-         kernel *kk=&kl->kernels[ki];
-         fwrite(&kk->type,4,1,df); fwrite(&kk->order,4,1,df);
-         fwrite(&kk->hsize,4,1,df); fwrite(&kk->sigma,8,1,df);
-         fwrite(&kk->bx,4,1,df); fwrite(&kk->by,4,1,df);
-         fwrite(&kk->target,4,1,df); fwrite(&kk->flag,4,1,df);
-         nv=(kk->order+1)*(kk->order+2)/2;
-         fwrite(&nv,4,1,df);
-         if(kk->coeff) fwrite(kk->coeff,8,nv,df);
-       }
-       fclose(df);
-     }
-   }
-   */
-
-  kernel_init_images(kl);
-  kernel_init_images(xl);
-
-  /* DUMP: kernel_init_images output (commented out)
-   { char p[512]; FILE *df; int ki, oo, nv, hsz, _i, _j;
-     snprintf(p,sizeof(p),"%s/pipe_kernelinit_out.bin",
-       "/Users/chaorun/Code/Githubs/fitsh-0.9.4/testgrmatch/tmp");
-     df=fopen(p,"wb"); if(df){
-       fwrite(&kl->nkernel,4,1,df);
-       fwrite(&kl->ox,8,1,df); fwrite(&kl->oy,8,1,df); fwrite(&kl->scale,8,1,df);
-       fwrite(&kl->type,4,1,df);
-       for(ki=0;ki<kl->nkernel;ki++){
-         kernel *kk=&kl->kernels[ki];
-         fwrite(&kk->type,4,1,df); fwrite(&kk->order,4,1,df);
-         fwrite(&kk->hsize,4,1,df); fwrite(&kk->sigma,8,1,df);
-         fwrite(&kk->bx,4,1,df); fwrite(&kk->by,4,1,df);
-         fwrite(&kk->target,4,1,df); fwrite(&kk->flag,4,1,df);
-         nv=(kk->order+1)*(kk->order+2)/2;
-         fwrite(&nv,4,1,df);
-         if(kk->coeff) fwrite(kk->coeff,8,nv,df);
-         hsz = 2*kk->hsize + 1;
-         if(kk->image) { for(_i=0;_i<hsz;_i++) fwrite(kk->image[_i],8,hsz,df); }
-       }
-       fclose(df);
-     }
-   }
-    return 0;  (commented out — remove to dump and exit early)
-    */
-
-  if (prefit_nkernels > 0 && prefit_coeffs != NULL)
-    {	int ki, co, ci = 0;
-     if (prefit_nkernels != kl->nkernel) {
-         logmsg(1, "prefit: nkernels mismatch (%d vs %d)\n", prefit_nkernels, kl->nkernel);
-         r = 4; goto cleanup;
-     }
-     kl->ox = prefit_ox;
-    kl->oy = prefit_oy;
-    kl->scale = prefit_scale;
-    for (ki = 0; ki < kl->nkernel; ki++)
-     {	kernel *kk = &kl->kernels[ki];
-        int nv = prefit_ncoeffs[ki];
-        if (kk->coeff) free(kk->coeff);
-        kk->coeff = (double *)malloc(nv * sizeof(double));
-        for (co = 0; co < nv; co++)
-            kk->coeff[co] = prefit_coeffs[ci++];
-     }
-    kl->type = 1;
-    kernel_init_images(kl);
-   }
-  else
-
-  r = fit_kernels(&refimg, mr, &img, mi, inmask,
-  	kl, xl, method, bdc, niter, rejlevel, gain);
-  if ( r )
-  {	r = 2; goto cleanup; }
-
-  /* kernel list string */
-  if ( kernel_list_out != NULL )
-   {	int ki, oo, nv, nk = kl->nkernel;
-    size_t est = 4096, pos = 0;
-    char *buf = malloc(est);
-    if ( buf != NULL )
-     {	pos += snprintf(buf+pos, est-pos, "# %d kernels\n", nk);
-        pos += snprintf(buf+pos, est-pos, "type=%d\n", kl->type);
-        pos += snprintf(buf+pos, est-pos, "offset=%.15g,%.15g\n", kl->ox, kl->oy);
-        pos += snprintf(buf+pos, est-pos, "scale=%.15g\n", kl->scale);
-        for (ki=0; ki<nk; ki++)
-         {	kernel *kk = &kl->kernels[ki];
-            pos += snprintf(buf+pos, est-pos, "kernel=%d", ki);
-            pos += snprintf(buf+pos, est-pos, " type=%d", kk->type);
-            pos += snprintf(buf+pos, est-pos, " order=%d", kk->order);
-            if ( kk->type == KERNEL_GAUSSIAN ) {
-                pos += snprintf(buf+pos, est-pos, " hsize=%d sigma=%.15g", kk->hsize, kk->sigma);
-            }
-             if ( kk->coeff && kl->type==1 )
-              {	nv = (kk->order+1)*(kk->order+2)/2;
-                 pos += snprintf(buf+pos, est-pos, " coeff=%.15g", kk->coeff[0]);
-                 for (oo=1; oo<nv; oo++)
-                  {	if (pos+32 >= est) { est*=2; buf=realloc(buf,est); }
-                     pos += snprintf(buf+pos, est-pos, " %.15g", kk->coeff[oo]);
-                 }
-             }
-            pos += snprintf(buf+pos, est-pos, "\n");
-            if (pos+128 >= est) { est*=2; buf=realloc(buf,est); }
-         }
-        *kernel_list_out = buf;
-     }
-   }
-
- /* build proper convolution mask (same as ficonv.c main()) */
-  {	int	 hsize = 0;
-  	kernel	*k;
-  	for (i=0,k=kl->kernels; i<kl->nkernel; i++,k++)
-  	 {	if ( k->type==KERNEL_BACKGROUND || k->type==KERNEL_IDENTITY )
-  			continue;
-  		if (k->hsize > hsize) hsize = k->hsize;
-  	 }
- 	{	char **mask_base, **cmask;
- 		mask_base = mask_create_empty(sx,sy);
- 		mask_and(mask_base,sx,sy,mr);
- 		if (inmask != NULL) mask_and(mask_base,sx,sy,inmask);
-  	cmask = mask_expand_false(mask_base,sx,sy,hsize,-1,-1,1);
-  	mask_free(mask_base);
-  	r = convolve_with_kernel_set(&refimg, cmask, kl, &outimg);
-  		for (i=0; i<sy; i++)
- 		memcpy(mo[i], cmask[i], sx);
- 		if (add_data != NULL)
- 		 {	int k;
- 		 	for (i=0; i<sy; i++)
- 		 	 {	for (k=0; k<sx; k++)
- 		 	 	 {	if ( ! cmask[i][k] )
- 		 	 	 		outimg.data[i][k] += add_data[i*sx + k],
- 		 	 	 		mo[i][k] = 0;
- 		 	 	 	else
- 		 	 	 		mo[i][k] = (char)(-1);
- 		 	 	 }
- 		 	 }
- 		 }
- 		if (sub_data != NULL)
- 		 {	image sub_img;
- 		 	char **submask_out;
- 		 	sub_img.sx = sx; sub_img.sy = sy;
- 		 	sub_img.data = malloc(sy * sizeof(double *));
- 		 	{	double *fb = malloc(sx * sy * sizeof(double));
- 		 		for (i=0; i<sy; i++) sub_img.data[i] = fb + i * sx; }
- 		 	submask_out = mask_create_empty(sx,sy);
- 		 	make_subtracted_image(&outimg, cmask, &img, mi, &sub_img, submask_out, xl);
- 		 	for (i=0; i<sy; i++)
- 		 		memcpy(sub_data + i * sx, sub_img.data[i], sx * sizeof(double));
- 		 	free(sub_img.data[0]); free(sub_img.data);
- 		 	mask_free(submask_out);
- 		 }
- 		mask_free(cmask);
- 	}
- }
- if ( r )
-  {	r = 3; goto cleanup; }
-
- /* unity kernels — after convolution, matching CLI */
- if ( unity_kernels )
-  {	int ki; double norm = 1.0;
-  	for (ki=0; ki<kl->nkernel; ki++)
-  	 {	if (kl->kernels[ki].type == KERNEL_IDENTITY)
-  	 	 {	int oo, nv;
-  	 	 	norm = kl->kernels[ki].coeff[0];
-  	 	 	nv = (kl->kernels[ki].order+1)*(kl->kernels[ki].order+2)/2;
-  	 	 	kl->kernels[ki].coeff[0] = 1.0;
-  	 	 	for (oo=1; oo<nv; oo++) kl->kernels[ki].coeff[oo] = 0.0;
-  	 	 }
-  	 }
-  	for (ki=0; ki<kl->nkernel; ki++)
-   	 {	if (kl->kernels[ki].type == KERNEL_DDELTA && 0 < norm)
-  	 	 {	int oo, nv;
-  	 	 	nv = (kl->kernels[ki].order+1)*(kl->kernels[ki].order+2)/2;
-  	 	 	for (oo=0; oo<nv; oo++) kl->kernels[ki].coeff[oo] /= norm;
-  	 	 }
-  	 }
-  }
-
-  /* dump: final output (commented out)
-   { char p[512]; FILE *df; int ii;
-     snprintf(p,sizeof(p),"%s/ficonv_dump_out.bin",
-       "/Users/chaorun/Code/Githubs/fitsh-0.9.4/testgrmatch/tmp");
-     df=fopen(p,"wb"); if(df){
-       fwrite(&sx,4,1,df); fwrite(&sy,4,1,df);
-       for(ii=0;ii<sy;ii++) fwrite(cnv_data+ii*sx,8,sx,df);
-       fclose(df);
-     }
-   }
-   */
-  r = 0;
-
-cleanup:
- free(refimg.data);
- free(img.data);
- free(outimg.data);
- free(mr); free(mi); free(mo); if (inmask) free(inmask);
- return r;
-}
+//   memset(kl, 0, sizeof(kernellist));
+//  memset(xl, 0, sizeof(kernellist));
+//   /* 两条路径互斥：预拟合数据（来自 kernel_dict）与内核规格字符串（-k 参数） */
+//   if (prefit_nkernels <= 0      /* 无预拟合数据                            */
+//       && kernel_spec             /* 内核规格字符串已提供                    */
+//       && create_kernels_from_kernelarg(kernel_spec, kl))  /* 解析规格构建 klist */
+//    {	r = 1; goto cleanup; }
+//
+//  kl->type = 0;
+//
+//  for (i=0 ; i<kl->nkernel ; i++)
+//  	kl->kernels[i].target = 0;
+//
+//  xl->nkernel = 0;
+//  xl->kernels = NULL;
+//
+//   logmsg(is_verbose>=1, "Number of kernels: %d.\n", kl->nkernel);
+//
+//   /* DUMP: kernel_init_images input (commented out)
+//    { char p[512]; FILE *df; int ki, oo, nv;
+//      snprintf(p,sizeof(p),"%s/pipe_kernelinit_in.bin",
+//        "/Users/chaorun/Code/Githubs/fitsh-0.9.4/testgrmatch/tmp");
+//      df=fopen(p,"wb"); if(df){
+//        fwrite(&kl->nkernel,4,1,df);
+//        fwrite(&kl->ox,8,1,df); fwrite(&kl->oy,8,1,df); fwrite(&kl->scale,8,1,df);
+//        fwrite(&kl->type,4,1,df);
+//        for(ki=0;ki<kl->nkernel;ki++){
+//          kernel *kk=&kl->kernels[ki];
+//          fwrite(&kk->type,4,1,df); fwrite(&kk->order,4,1,df);
+//          fwrite(&kk->hsize,4,1,df); fwrite(&kk->sigma,8,1,df);
+//          fwrite(&kk->bx,4,1,df); fwrite(&kk->by,4,1,df);
+//          fwrite(&kk->target,4,1,df); fwrite(&kk->flag,4,1,df);
+//          nv=(kk->order+1)*(kk->order+2)/2;
+//          fwrite(&nv,4,1,df);
+//          if(kk->coeff) fwrite(kk->coeff,8,nv,df);
+//        }
+//        fclose(df);
+//      }
+//    }
+//    */
+//
+//   kernel_init_images(kl);
+//   kernel_init_images(xl);
+//
+//   /* DUMP: kernel_init_images output (commented out)
+//    { char p[512]; FILE *df; int ki, oo, nv, hsz, _i, _j;
+//      snprintf(p,sizeof(p),"%s/pipe_kernelinit_out.bin",
+//        "/Users/chaorun/Code/Githubs/fitsh-0.9.4/testgrmatch/tmp");
+//      df=fopen(p,"wb"); if(df){
+//        fwrite(&kl->nkernel,4,1,df);
+//        fwrite(&kl->ox,8,1,df); fwrite(&kl->oy,8,1,df); fwrite(&kl->scale,8,1,df);
+//        fwrite(&kl->type,4,1,df);
+//        for(ki=0;ki<kl->nkernel;ki++){
+//          kernel *kk=&kl->kernels[ki];
+//          fwrite(&kk->type,4,1,df); fwrite(&kk->order,4,1,df);
+//          fwrite(&kk->hsize,4,1,df); fwrite(&kk->sigma,8,1,df);
+//          fwrite(&kk->bx,4,1,df); fwrite(&kk->by,4,1,df);
+//          fwrite(&kk->target,4,1,df); fwrite(&kk->flag,4,1,df);
+//          nv=(kk->order+1)*(kk->order+2)/2;
+//          fwrite(&nv,4,1,df);
+//          if(kk->coeff) fwrite(kk->coeff,8,nv,df);
+//          hsz = 2*kk->hsize + 1;
+//          if(kk->image) { for(_i=0;_i<hsz;_i++) fwrite(kk->image[_i],8,hsz,df); }
+//        }
+//        fclose(df);
+//      }
+//    }
+//     return 0;  (commented out — remove to dump and exit early)
+//     */
+//
+//   if (prefit_nkernels > 0 && prefit_coeffs != NULL)
+//     {	int ki, co, ci = 0;
+//      if (prefit_nkernels != kl->nkernel) {
+//          logmsg(1, "prefit: nkernels mismatch (%d vs %d)\n", prefit_nkernels, kl->nkernel);
+//          r = 4; goto cleanup;
+//      }
+//      kl->ox = prefit_ox;
+//     kl->oy = prefit_oy;
+//     kl->scale = prefit_scale;
+//     for (ki = 0; ki < kl->nkernel; ki++)
+//      {	kernel *kk = &kl->kernels[ki];
+//         int nv = prefit_ncoeffs[ki];
+//         if (kk->coeff) free(kk->coeff);
+//         kk->coeff = (double *)malloc(nv * sizeof(double));
+//         for (co = 0; co < nv; co++)
+//             kk->coeff[co] = prefit_coeffs[ci++];
+//      }
+//     kl->type = 1;
+//     kernel_init_images(kl);
+//    }
+//   else
+//
+//   r = fit_kernels(&refimg, mr, &img, mi, inmask,
+//   	kl, xl, method, bdc, niter, rejlevel, gain);
+//   if ( r )
+//   {	r = 2; goto cleanup; }
+//
+// //   /* kernel list string */
+//   if ( kernel_list_out != NULL )
+//    {	int ki, oo, nv, nk = kl->nkernel;
+//     size_t est = 4096, pos = 0;
+//     char *buf = malloc(est);
+//     if ( buf != NULL )
+//      {	pos += snprintf(buf+pos, est-pos, "# %d kernels\n", nk);
+//         pos += snprintf(buf+pos, est-pos, "type=%d\n", kl->type);
+//         pos += snprintf(buf+pos, est-pos, "offset=%.15g,%.15g\n", kl->ox, kl->oy);
+//         pos += snprintf(buf+pos, est-pos, "scale=%.15g\n", kl->scale);
+//         for (ki=0; ki<nk; ki++)
+//          {	kernel *kk = &kl->kernels[ki];
+//             pos += snprintf(buf+pos, est-pos, "kernel=%d", ki);
+//             pos += snprintf(buf+pos, est-pos, " type=%d", kk->type);
+//             pos += snprintf(buf+pos, est-pos, " order=%d", kk->order);
+//             if ( kk->type == KERNEL_GAUSSIAN ) {
+//                 pos += snprintf(buf+pos, est-pos, " hsize=%d sigma=%.15g", kk->hsize, kk->sigma);
+//             }
+//              if ( kk->coeff && kl->type==1 )
+//               {	nv = (kk->order+1)*(kk->order+2)/2;
+//                  pos += snprintf(buf+pos, est-pos, " coeff=%.15g", kk->coeff[0]);
+//                  for (oo=1; oo<nv; oo++)
+//                   {	if (pos+32 >= est) { est*=2; buf=realloc(buf,est); }
+//                      pos += snprintf(buf+pos, est-pos, " %.15g", kk->coeff[oo]);
+//                  }
+//              }
+//             pos += snprintf(buf+pos, est-pos, "\n");
+//             if (pos+128 >= est) { est*=2; buf=realloc(buf,est); }
+//          }
+//         *kernel_list_out = buf;
+//      }
+//    }
+//
+//  /* build proper convolution mask (same as ficonv.c main()) */
+//   {	int	 hsize = 0;
+//   	kernel	*k;
+//   	for (i=0,k=kl->kernels; i<kl->nkernel; i++,k++)
+//   	 {	if ( k->type==KERNEL_BACKGROUND || k->type==KERNEL_IDENTITY )
+//   			continue;
+//   		if (k->hsize > hsize) hsize = k->hsize;
+//   	 }
+//  	{	char **mask_base, **cmask;
+//  		mask_base = mask_create_empty(sx,sy);
+//  		mask_and(mask_base,sx,sy,mr);
+//  		if (inmask != NULL) mask_and(mask_base,sx,sy,inmask);
+//   	cmask = mask_expand_false(mask_base,sx,sy,hsize,-1,-1,1);
+//   	mask_free(mask_base);
+//   	r = convolve_with_kernel_set(&refimg, cmask, kl, &outimg);
+//   		for (i=0; i<sy; i++)
+//  		memcpy(mo[i], cmask[i], sx);
+//  		if (add_data != NULL)
+//  		 {	int k;
+//  		 	for (i=0; i<sy; i++)
+//  		 	 {	for (k=0; k<sx; k++)
+//  		 	 	 {	if ( ! cmask[i][k] )
+//  		 	 	 		outimg.data[i][k] += add_data[i*sx + k],
+//  		 	 	 		mo[i][k] = 0;
+//  		 	 	 	else
+//  		 	 	 		mo[i][k] = (char)(-1);
+//  		 	 	 }
+//  		 	 }
+//  		 }
+//  		if (sub_data != NULL)
+//  		 {	image sub_img;
+//  		 	char **submask_out;
+//  		 	sub_img.sx = sx; sub_img.sy = sy;
+//  		 	sub_img.data = malloc(sy * sizeof(double *));
+//  		 	{	double *fb = malloc(sx * sy * sizeof(double));
+//  		 		for (i=0; i<sy; i++) sub_img.data[i] = fb + i * sx; }
+//  		 	submask_out = mask_create_empty(sx,sy);
+//  		 	make_subtracted_image(&outimg, cmask, &img, mi, &sub_img, submask_out, xl);
+//  		 	for (i=0; i<sy; i++)
+//  		 		memcpy(sub_data + i * sx, sub_img.data[i], sx * sizeof(double));
+//  		 	free(sub_img.data[0]); free(sub_img.data);
+//  		 	mask_free(submask_out);
+//  		 }
+//  		mask_free(cmask);
+//  	}
+//  }
+//  if ( r )
+//   {	r = 3; goto cleanup; }
+//
+//  /* unity kernels — after convolution, matching CLI */
+//  if ( unity_kernels )
+//   {	int ki; double norm = 1.0;
+//   	for (ki=0; ki<kl->nkernel; ki++)
+//   	 {	if (kl->kernels[ki].type == KERNEL_IDENTITY)
+//   	 	 {	int oo, nv;
+//   	 	 	norm = kl->kernels[ki].coeff[0];
+//   	 	 	nv = (kl->kernels[ki].order+1)*(kl->kernels[ki].order+2)/2;
+//   	 	 	kl->kernels[ki].coeff[0] = 1.0;
+//   	 	 	for (oo=1; oo<nv; oo++) kl->kernels[ki].coeff[oo] = 0.0;
+//   	 	 }
+//   	 }
+//   	for (ki=0; ki<kl->nkernel; ki++)
+//    	 {	if (kl->kernels[ki].type == KERNEL_DDELTA && 0 < norm)
+//   	 	 {	int oo, nv;
+//   	 	 	nv = (kl->kernels[ki].order+1)*(kl->kernels[ki].order+2)/2;
+//   	 	 	for (oo=0; oo<nv; oo++) kl->kernels[ki].coeff[oo] /= norm;
+//   	 	 }
+//   	 }
+//   }
+//
+//   /* dump: final output (commented out)
+//    { char p[512]; FILE *df; int ii;
+//      snprintf(p,sizeof(p),"%s/ficonv_dump_out.bin",
+//        "/Users/chaorun/Code/Githubs/fitsh-0.9.4/testgrmatch/tmp");
+//      df=fopen(p,"wb"); if(df){
+//        fwrite(&sx,4,1,df); fwrite(&sy,4,1,df);
+//        for(ii=0;ii<sy;ii++) fwrite(cnv_data+ii*sx,8,sx,df);
+//        fclose(df);
+//      }
+//    }
+//    */
+//   r = 0;
+//
+// cleanup:
+//  free(refimg.data);
+//  free(img.data);
+//  free(outimg.data);
+//  free(mr); free(mi); free(mo); if (inmask) free(inmask);
+//  return r;
+// }
+//
+// 删除 ficoconv_fit_cy 废弃函数，但外部声明暂不更新
 
 int fitsh_ficonv_fit_cy(
     double *ref_data, char *ref_mask,
