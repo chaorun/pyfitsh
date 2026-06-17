@@ -3,31 +3,6 @@
 
 #include "kernel.h"
 
-int ficonv_fit_cy(
-    double *ref_data, char *ref_mask,
-    double *img_data, char *img_mask,
-    char *inmask_data,
-    int sx, int sy,
-    char *kernel_spec,
-    int method,
-    int bdc,
-    int niter, double rejlevel, double gain,
-    int is_verbose,
-    double *cnv_data, char *cnv_mask,
-    double *sub_data,
-    double *add_data,
-    int unity_kernels,
-    char **kernel_list_out,
-    char *stamp_arg,
-    int psx, int psy, char *spline_stamp_arg,
-    /* pre-fitted kernel dict (skip fitting if nkernels > 0) */
-    int prefit_nkernels,
-    int *prefit_types,
-    int *prefit_orders,
-    int *prefit_ncoeffs,
-    double *prefit_coeffs,
-    double prefit_ox, double prefit_oy, double prefit_scale);
-
 int fitsh_ficonv_fit_cy(
     double *ref_data, char *ref_mask,
     double *img_data, char *img_mask,
