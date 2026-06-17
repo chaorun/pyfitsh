@@ -10,3 +10,5 @@ dist/
 .cache/
 *.zip
 .DS_Store
+deprecated/
+testdata/
