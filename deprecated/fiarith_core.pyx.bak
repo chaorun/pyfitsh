@@ -1,0 +1,340 @@
+# -*- coding: utf-8 -*-
+# fiarith_core.pyx — fiarith 表达式求值器 Cython 封装
+
+import numpy as np
+cimport numpy as cnp
+from libc.stdlib cimport malloc, free
+from libc.string cimport memset
+
+cnp.import_array()
+
+cdef extern from "image.h":
+    ctypedef struct image:
+        int sx, sy
+        double **data
+
+cdef extern from "psn/psn.h":
+    ctypedef struct psnterm:
+        int type
+        int major
+        int minor
+
+    ctypedef struct psn:
+        psnterm *terms
+        double  *cons
+        int     nterm
+        int     ncon
+
+    ctypedef struct psnsym:
+        int    type
+        int    major
+        char  *name
+        int    minor
+
+    ctypedef struct psnprop:
+        int    major
+        int    narg
+        int    priority
+        int    assoc
+
+    int T_CONST
+    int T_SCONST
+    int T_VAR
+    int T_OP
+    int T_FN
+    int TO_INFIX
+    int TO_PREFIX
+
+    psn * psn_conv_string(char *str, psnsym **syms)
+    void   psn_init(psn *p, psnprop *prop)
+    psn * psn_conv(psn *p, psnprop *prop)
+    void   psn_free(psn *p)
+    int    psn_test(psn *p)
+
+cdef extern from "psn/psn-general.h":
+    psnsym psn_general_op[]
+    psnsym psn_general_fn[]
+    psnprop psn_general_prop[]
+
+cdef extern from "evaluate.h":
+    ctypedef struct operand:
+        image *img
+
+    ctypedef struct evaldata:
+        int sx, sy
+        operand *ops
+        int nop
+        psn **udfs
+        int nudf
+        char **mask
+
+    psnsym psn_img_op[]
+    psnsym psn_img_fn[]
+    psnprop psn_img_prop[]
+    psnsym psn_subimg_var[]
+
+    image * evaluate(evaldata *ed, psn *pseq)
+
+
+cdef class Fiarith:
+    """FITS 图像逐像素算术表达式求值器。
+
+    Usage:
+        fa = Fiarith()
+        r = fa.evaluate("a - b", {"a": arr1, "b": arr2})
+        r = fa.evaluate("1500.0", size=(512, 512))
+        r = fa.evaluate("sqrt(a)", {"a": arr})
+    """
+    def __init__(self):
+        pass
+
+    cpdef cnp.ndarray evaluate(self, str expr, dict operands=None,
+                               tuple size=None):
+        cdef int sx, sy, nop, i, j
+        cdef evaldata ed
+        cdef operand *opsp
+        cdef image *result_img, *img
+        cdef psn *w, *pexpr
+        cdef psnsym **syms
+        cdef psnsym *csym
+        cdef double *arr_buf
+        cdef cnp.ndarray[cnp.float64_t, ndim=2, mode="c"] arr, arr0, out
+
+        # [...](body) 用
+        cdef psn **udf_arr
+        cdef psnsym **udfsym_table
+        cdef psnsym **sub_syms_arr
+        cdef psnsym *param_sym_arr
+        cdef int nudf_count, nparam
+        cdef str main_expr
+        cdef bytes expr_bytes, bb, un
+        cdef char *expr_ptr, *bp
+        cdef psn *bw, *bpexpr
+
+        # --- 确定尺寸 ---
+        if operands is not None and len(operands) > 0:
+            keys = list(operands.keys())
+            nop = len(keys)
+            key_bytes_list = [k.encode('utf-8') for k in keys]
+
+            arr0 = np.ascontiguousarray(operands[keys[0]], dtype=np.float64)
+            sy = arr0.shape[0]
+            sx = arr0.shape[1]
+        else:
+            keys = []
+            nop = 0
+            key_bytes_list = []
+            if size is not None:
+                sx, sy = size
+            else:
+                raise ValueError("either operands or size must be provided")
+
+        # --- 检测并编译 [...](body) 子表达式 ---
+        nudf_count = 0
+        udf_arr = NULL
+        udfsym_table = NULL
+        main_expr = expr
+
+        cdef str clean = expr.strip()
+        if clean.startswith('['):
+            bracket_end = clean.find(']')
+            if bracket_end > 1:
+                paren_start = clean.find('(', bracket_end)
+                if paren_start > bracket_end:
+                    # 解析参数列表
+                    param_str = clean[1:bracket_end].strip()
+                    if param_str:
+                        params = [p.strip() for p in param_str.split(',') if p.strip()]
+                    else:
+                        params = []
+                    nparam = len(params)
+
+                    # 解析 body — 找匹配的右括号
+                    depth = 0
+                    body_start = paren_start + 1
+                    body_end = paren_start
+                    for k in range(paren_start, len(clean)):
+                        if clean[k] == '(':
+                            depth += 1
+                        elif clean[k] == ')':
+                            depth -= 1
+                            if depth == 0:
+                                body_end = k
+                                break
+                    body_str = clean[body_start:body_end].strip()
+                    tail_str = clean[body_end+1:].strip()
+
+                    # 构建子表达式符号表: [subimg_var, general_op, general_fn, img_fn, 参数符号]
+                    sub_syms_arr = <psnsym **>malloc(sizeof(psnsym *) * 6)
+                    sub_syms_arr[0] = <psnsym *>psn_subimg_var
+                    sub_syms_arr[1] = <psnsym *>psn_general_op
+                    sub_syms_arr[2] = <psnsym *>psn_general_fn
+                    sub_syms_arr[3] = <psnsym *>psn_img_fn
+
+                    # 子表达式中的参数符号
+                    param_bytes = []
+                    param_sym_arr = NULL
+                    if nparam > 0:
+                        param_sym_arr = <psnsym *>malloc(sizeof(psnsym) * (nparam + 1))
+                        memset(param_sym_arr, 0, sizeof(psnsym) * (nparam + 1))
+                        for k in range(nparam):
+                            b = params[k].encode('utf-8')
+                            param_bytes.append(b)
+                            param_sym_arr[k].type = T_VAR
+                            param_sym_arr[k].major = k
+                            param_sym_arr[k].name = <char *>b
+                        param_sym_arr[nparam].type = 0
+                        param_sym_arr[nparam].name = NULL
+                        sub_syms_arr[4] = param_sym_arr
+                        sub_syms_arr[5] = NULL
+                    else:
+                        sub_syms_arr[4] = NULL
+                        sub_syms_arr[5] = NULL
+
+                    # 编译 body
+                    bb = body_str.encode('utf-8')
+                    bp = <char *>bb
+                    bw = psn_conv_string(bp, sub_syms_arr)
+                    if bw == NULL:
+                        raise ValueError(f"子表达式语法错误: {body_str}")
+                    psn_init(bw, psn_general_prop)
+                    bpexpr = psn_conv(bw, psn_general_prop)
+                    psn_free(bw)
+                    if bpexpr == NULL or psn_test(bpexpr):
+                        raise ValueError(f"子表达式解析错误: {body_str}")
+
+                    # 注册 UDF
+                    nudf_count = 1
+                    udf_arr = <psn **>malloc(sizeof(psn *))
+                    udf_arr[0] = bpexpr
+
+                    # UDF 主表达式符号
+                    udfsym_table = <psnsym **>malloc(sizeof(psnsym *) * 2)
+                    udfsym_table[0] = <psnsym *>malloc(sizeof(psnsym) * 2)
+                    memset(udfsym_table[0], 0, sizeof(psnsym) * 2)
+                    un = b"f"
+                    udfsym_table[0][0].type = T_FN
+                    udfsym_table[0][0].major = 64
+                    udfsym_table[0][0].name = un
+                    udfsym_table[0][0].minor = nparam
+                    udfsym_table[0][1].type = 0
+                    udfsym_table[0][1].name = NULL
+                    udfsym_table[1] = NULL
+
+                    # 替换主表达式
+                    if nparam > 0:
+                        main_expr = "f(" + ",".join(params) + ")"
+                    else:
+                        main_expr = "f()"
+                    if tail_str:
+                        main_expr = main_expr + " " + tail_str
+
+                    # 释放临时资源
+                    free(sub_syms_arr)
+                    if param_sym_arr != NULL:
+                        free(param_sym_arr)
+
+        # --- 构建 evaldata ---
+        memset(&ed, 0, sizeof(evaldata))
+        ed.sx = sx
+        ed.sy = sy
+        ed.nop = nop
+        ed.nudf = nudf_count
+        ed.udfs = udf_arr
+        ed.mask = NULL
+
+        if nop > 0:
+            opsp = <operand *>malloc(nop * sizeof(operand))
+            if opsp == NULL:
+                raise MemoryError("operand allocation failed")
+            memset(opsp, 0, nop * sizeof(operand))
+
+            for i in range(nop):
+                arr = np.ascontiguousarray(operands[keys[i]], dtype=np.float64)
+                if arr.shape[0] != sy or arr.shape[1] != sx:
+                    raise ValueError("operand shape mismatch")
+
+                img = <image *>malloc(sizeof(image))
+                if img == NULL:
+                    raise MemoryError("image allocation failed")
+                memset(img, 0, sizeof(image))
+                img.sx = sx
+                img.sy = sy
+                img.data = <double **>malloc(sizeof(double *) * sy + sizeof(double) * sx * sy)
+                if img.data == NULL:
+                    free(img)
+                    raise MemoryError("image row-pointer allocation failed")
+
+                arr_buf = <double *>(img.data + sy)
+                for j in range(sy):
+                    img.data[j] = arr_buf + j * sx
+                for j in range(sy):
+                    for k in range(sx):
+                        img.data[j][k] = arr[j, k]
+
+                opsp[i].img = img
+            ed.ops = opsp
+        else:
+            ed.ops = NULL
+            opsp = NULL
+
+        # --- 构建 PSN 符号表 ---
+        csym = <psnsym *>malloc(sizeof(psnsym) * (nop + 1))
+        memset(csym, 0, sizeof(psnsym) * (nop + 1))
+        for i in range(nop):
+            key_bytes = key_bytes_list[i]
+            csym[i].type = T_VAR
+            csym[i].major = i
+            csym[i].name = <char *>key_bytes
+        csym[nop].type = 0
+        csym[nop].name = NULL
+
+        syms = <psnsym **>malloc(sizeof(psnsym *) * 6)
+        syms[0] = <psnsym *>psn_img_op
+        syms[1] = <psnsym *>psn_img_fn
+        syms[2] = <psnsym *>csym
+        if udfsym_table != NULL:
+            syms[3] = udfsym_table[0]
+            syms[4] = NULL
+        else:
+            syms[3] = NULL
+            syms[4] = NULL
+
+        # --- 解析表达式 ---
+        expr_bytes = main_expr.encode('utf-8')
+        expr_ptr = <char *>expr_bytes
+
+        w = psn_conv_string(expr_ptr, syms)
+        if w == NULL:
+            raise ValueError(f"symbolic error in expression: {expr}")
+
+        psn_init(w, psn_img_prop)
+        pexpr = psn_conv(w, psn_img_prop)
+        psn_free(w)
+        if pexpr == NULL or psn_test(pexpr):
+            raise ValueError(f"parse error in expression: {expr}")
+
+        # --- 求值 ---
+        result_img = evaluate(&ed, pexpr)
+        psn_free(pexpr)
+
+        if result_img == NULL:
+            raise RuntimeError("evaluation failed")
+
+        # --- 复制结果到 numpy 数组 ---
+        out = np.empty((sy, sx), dtype=np.float64)
+        for i in range(sy):
+            for j in range(sx):
+                out[i, j] = result_img.data[i][j]
+
+        # --- 清理 ---
+        if result_img != NULL:
+            if result_img.data != NULL:
+                free(result_img.data)
+            free(result_img)
+        free(csym)
+        free(syms)
+        if opsp != NULL:
+            free(opsp)
+
+        return out

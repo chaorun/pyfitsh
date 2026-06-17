@@ -1,0 +1,268 @@
+# grmatch_cy.pxd — Cython declarations for the C interface
+
+cdef extern from "grmatch_lib.h":
+    ctypedef struct matchpointstat:
+        double wsigma
+        double nsigma
+        double unitarity
+        double time_total
+        double time_trimatch
+        double time_symmatch
+        int nmiter
+        int tri_level
+        double hull_coverage
+
+
+cdef extern from "grmatch_core.h":
+    int do_pointmatch_flat(
+        double *ref_x, double *ref_y, double *ref_ord, int nref,
+        double *inp_x, double *inp_y, double *inp_ord, int ninp,
+        int ttype, double maxdist, double unitarity, int parity,
+        int use_ordering, int maxnum_ref, int maxnum_inp,
+        int nmiter, int friter, double rejlevel,
+        int wcat, int w_magnitude, double wpower,
+        int is_centering, double refcx, double refcy,
+        double inpcx, double inpcy, double maxcenterdist,
+        int order,
+        double ox, double oy, double scale,
+        double *hint_dxfit, double *hint_dyfit, int hint_order,
+        int **hits_idx0, int **hits_idx1, int *rnhit,
+        double **vfits_dx, double **vfits_dy,
+        matchpointstat *mps) nogil
+
+    int coord_match_flat(
+        double *ref_x, double *ref_y, int nref,
+        double *inp_x, double *inp_y, int ninp,
+        double maxdist,
+        int **hits_idx0, int **hits_idx1, int *rnhit) nogil
+
+    int id_match_flat(
+        char **ref_ids, int nref,
+        char **inp_ids, int ninp,
+        int ambig,
+        int **hits_idx0, int **hits_idx1, int *rnhit) nogil
+
+
+cdef extern from "trans_core.h":
+    int trans_apply_flat(
+        double *in_x, double *in_y, int npts,
+        double *out_x, double *out_y,
+        int order, int is_invert,
+        double ox, double oy, double scale,
+        double *dxfit, double *dyfit) nogil
+
+
+cdef extern from "wcs_core.h":
+    ctypedef struct wcs_fit_input:
+        double ra0, de0, roll0
+        int type, order
+        int n_k, n_p
+        double k[4], p[4]
+
+    ctypedef struct wcs_fit_output:
+        double crpix1, crpix2
+        double cd11, cd12, cd21, cd22
+        double res_prj, res_pix
+        int order, nvar
+        double *pixpoly_dx
+        double *pixpoly_dy
+        double *prjpoly_dx
+        double *prjpoly_dy
+
+    int wcs_fit_flat(
+        double *ra, double *dec, double *px, double *py, int npts,
+        const wcs_fit_input *cfg,
+        wcs_fit_output *out) nogil
+
+    void wcs_fit_output_free(wcs_fit_output *out) nogil
+
+
+cdef extern from "polyfit_core.h":
+    int poly_fit_flat(
+        double *x, double *y, double *vals, double *weights, int npts,
+        int order, double ox, double oy, double scale,
+        double *coeff_out) nogil
+
+    int poly_compose_affine_flat(
+        double *coeff, int order,
+        double xlin0, double xlin1, double xlin2,
+        double ylin0, double ylin1, double ylin2,
+        double *rc) nogil
+
+
+cdef extern from "fitrans_core.h":
+    int fitrans_apply_flat(
+        double *in_data, char *in_mask, int sx, int sy,
+        double *out_data, char *out_mask, int nsx, int nsy,
+        int ofx, int ofy,
+        int order, int int_method, int is_invert,
+        double ox, double oy, double scale,
+        double *dxfit, double *dyfit) nogil
+
+
+cdef extern from "fitrans_ops.h":
+    int fitrans_noise_flat(
+        double *in_data, char *in_mask, int sx, int sy,
+        double *out_data, char *out_mask) nogil
+
+    int fitrans_zoom_flat(
+        double *in_data, char *in_mask, int sx, int sy,
+        double *out_data, char *out_mask, int nsx, int nsy,
+        int ofx, int ofy, int scalex, int scaley, int is_raw) nogil
+
+    int fitrans_shrink_flat(
+        double *in_data, char *in_mask, int sx, int sy,
+        double *out_data, char *out_mask, int nsx, int nsy,
+        int ofx, int ofy, int scalex, int scaley,
+        int mode_median, int mode_truncated_mean, int mode_average_mask) nogil
+
+    int fitrans_smooth_flat(
+        double *in_data, char *in_mask, int sx, int sy,
+        double *out_data, char *out_mask,
+        int smooth_type, int xorder, int yorder,
+        int prefilter, int fxhsize, int fyhsize,
+        double frejratio, int niter, double lower, double upper,
+        int is_mean_unity, int is_detrend) nogil
+
+
+    int fitrans_repetitive_flat(
+        double *in_data, char *in_mask, int sx, int sy,
+        double *out_data, char *out_mask, int nsx, int nsy,
+        int ofx, int ofy) nogil
+
+    int fitrans_interleave_flat(
+        double *in_data, char *in_mask, int sx, int sy,
+        double *out_data, char *out_mask, int nsx, int nsy,
+        int ofx, int ofy,
+        int mode_median, int mode_truncated_mean, int mode_average_mask) nogil
+
+
+cdef extern from "fistar_core.h":
+    ctypedef struct fistar_result:
+        double *ix, *iy, *cx, *cy, *cbg, *camp, *cmax
+        int    *npix
+        double *cs, *cd, *ck
+        double *x, *y, *bg, *amp
+        double *s, *d, *k, *l
+        double *sigma, *delta, *kappa
+        double *fwhm, *ellip, *pa
+        double *flux, *noise, *sn, *magnitude
+        double *px, *py, *pbg, *pamp
+        double *ps, *pd, *pk, *pl
+
+    ctypedef struct fistar_psf_out:
+        int nvar, nside
+        double *data
+        double ox, oy, scale
+        int hsize, grid, order
+
+    int fistar_search_flat(
+        double *img, char *mask, int sx, int sy,
+        double th, double fth, double cp, double skysigma,
+        int alg, int model, int morder,
+        int it_sym, int it_gen, int only_cand,
+        int cf_niter, int cf_refine, double cf_bhsize,
+        int psf, int psf_hsize, int psf_grid, int psf_order,
+        int psf_type, int psf_symm, int psf_biquad,
+        double psf_ikappa, double psf_cwidth, int psf_corder,
+        double gain,
+        double mag_intensity, double mag_magnitude,
+        double *cand_xy, int ncand, double cand_rad,
+        double *pos_xy, int npos,
+        int src_xmin, int src_xmax, int src_ymin, int src_ymax,
+        int mark_symbol, int mark_size,
+        int out_flags, int sort,
+        int is_verbose,
+        int *nstar, fistar_result *res,
+        double *mark, double *area,
+        fistar_psf_out *psf_out,
+        double *pos_flux, double *pos_ferr) nogil
+
+cdef extern from "ficonv_core.h":
+    int ficonv_fit_flat(
+        double *ref_data, char *ref_mask,
+        double *img_data, char *img_mask,
+        char *inmask_data,
+        int sx, int sy,
+        char *kernel_spec,
+        int method,
+        int bdc,
+        int niter, double rejlevel, double gain,
+        int is_verbose,
+        double *cnv_data, char *cnv_mask,
+        char *stamp_arg,
+        int psx, int psy, char *spline_stamp_arg,
+        int unity_kernels,
+        char **kernel_list_out) nogil
+cdef extern from "weight.h":
+    ctypedef struct weightlist:
+        pass
+
+cdef extern from "fiphot_core.h":
+    int fiphot_photometry_flat(
+        double *img_data, char *img_mask, int sx, int sy,
+        double *star_x, double *star_y, int nstar,
+        double *star_r0, double *star_ra, double *star_da, int nap,
+        char *aperture_spec, int zoom,
+        int bg_type, int bg_scatter, int bg_rejniter,
+        double bg_rejlower, double bg_rejupper,
+        int mask_ignore, int use_biquad, int use_sky, double sky_level,
+        int is_disjoint_rings, int is_disjoint_apertures, double disjoint_radius,
+        double **subpixel_data, int subg,
+        int sg_order, double *sg_coeff, double sg_vmin,
+        double correlation_length, double sigma,
+        int is_calc_opt_apert,
+        weightlist *wl, int weightusage,
+        double *out_flux, double *out_fluxerr,
+        double *out_bgarea, double *out_bgflux, double *out_bgmedian, double *out_bgsigma,
+        double *out_cntr_x, double *out_cntr_y, double *out_cntr_width,
+        double *out_cntr_w_d, double *out_cntr_w_k,
+        double *out_cntr_x_err, double *out_cntr_y_err, double *out_cntr_w_err,
+        int *out_flag, int *out_rtot, int *out_rbad, int *out_rign,
+        int *out_atot, int *out_abad,
+        double *out_optimal_r0, double *out_optimal_ra, double *out_optimal_da) nogil
+
+    int fiphot_subtracted_photometry_flat(
+        double *img_data, char *img_mask, int sx, int sy,
+        double *star_x, double *star_y, int nstar,
+        double *star_r0, double *star_ra, double *star_da, int nap,
+        char *aperture_spec, int zoom,
+        int bg_type, int bg_scatter, int bg_rejniter,
+        double bg_rejlower, double bg_rejupper,
+        int mask_ignore, int use_biquad, int use_sky, double sky_level,
+        int is_disjoint_rings, int is_disjoint_apertures, double disjoint_radius,
+        double **subpixel_data, int subg,
+        int sg_order, double *sg_coeff, double sg_vmin,
+        double correlation_length,
+        char *kernel_spec, int normalize_kernel,
+        weightlist *wl, int weightusage,
+        double *out_flux, double *out_fluxerr,
+        double *out_bgarea, double *out_bgflux, double *out_bgmedian, double *out_bgsigma,
+        double *out_cntr_x, double *out_cntr_y, double *out_cntr_width,
+        double *out_cntr_w_d, double *out_cntr_w_k,
+        double *out_cntr_x_err, double *out_cntr_y_err, double *out_cntr_w_err,
+        int *out_flag, int *out_rtot, int *out_rbad, int *out_rign,
+        int *out_atot, int *out_abad) nogil
+
+    int fiphot_magnitude_fit_flat(
+        double *flux, int *flag, int nstar, int nap,
+        double *ref_flux, double *ref_col_arr, double *ref_mag_arr, double *ref_err_arr,
+        int *orders, int norder, int niter, double sigma,
+        int sx, int sy,
+        double *out_mag,
+        int *out_ninit, int *out_nrejs, int *out_nstar, int *out_naperture) nogil
+
+cdef extern from "grtrans_core.h":
+    int grtrans_apply_flat(
+        double *in_x, double *in_y, int npts,
+        double *out_x, double *out_y,
+        int order, int is_invert,
+        double ox, double oy, double scale,
+        double *dxfit, double *dyfit) nogil
+
+    void trans_get_jacobi(int order, double scale,
+        double *dxfit, double *dyfit,
+        double **rjxx, double **rjxy, double **rjyx, double **rjyy) nogil
+
+    int compose_2d_poly_with_affine(double *coeff, int order,
+        double *xlin, double *ylin, double *rc) nogil

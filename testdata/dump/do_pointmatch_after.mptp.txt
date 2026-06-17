@@ -1,0 +1,3 @@
+nmiter=0 friter=0 rejlevel=3
+maxdist=2 unitarity=0.01 parity=0 ttype=2 use_ordering=1 maxnum_ref=0 maxnum_inp=0
+wcat=-1 w_magnitude=0 wpower=0 is_centering=0 refcx=0 refcy=0 inpcx=0 inpcy=3.0309e-314 maxcenterdist=0 hintorder=-1

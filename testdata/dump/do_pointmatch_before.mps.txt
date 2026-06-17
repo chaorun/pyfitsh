@@ -1,0 +1,1 @@
+wsigma=4.94066e-324 nsigma=3.0309e-314 unitarity=3.0309e-314 time_total=3.0309e-314 time_trimatch=0 time_symmatch=0 nmiter=0 tri_level=0 hull_coverage=2.122e-314

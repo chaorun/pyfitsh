@@ -1,0 +1,12 @@
+node_modules/
+__pycache__/
+*.pyc
+*.so
+*.o
+*.dylib
+build/
+dist/
+*.egg-info/
+.cache/
+*.zip
+.DS_Store
