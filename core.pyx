@@ -1234,10 +1234,11 @@ cdef class Fistar:
             pflux, pferr)
 
         if self._fields: wanted = set(self._fields.split(','))
-        else: wanted = {'ix','iy','cx','cy','cbg','camp','cmax','npix','cs','cd','ck',
-                        'x','y','bg','amp','s','d','k','l',
+        else: wanted = {'id','ix','iy','cx','cy','cbg','camp','cmax','npix','cs','cd','ck',
+                        'x','y','bg','amp','s','d','k','l','mom',
                         'sigma','delta','kappa','fwhm','ellip','pa',
-                        'flux','noise','sn','px','py','pbg','pamp','ps','pd','pk','pl'}
+                        'flux','noise','sn','magnitude',
+                        'px','py','pbg','pamp','ps','pd','pk','pl'}
 
         # map aliases
         if 'mag' in wanted: wanted.discard('mag'); wanted.add('magnitude')
@@ -1245,6 +1246,7 @@ cdef class Fistar:
 
         result = {}
         if nstar > 0:
+            if 'id' in wanted: result['id'] = np.array([res.id[i] for i in range(nstar)], dtype=np.int32)
             if 'ix' in wanted: result['ix'] = np.array([res.ix[i] for i in range(nstar)])
             if 'iy' in wanted: result['iy'] = np.array([res.iy[i] for i in range(nstar)])
             if 'cx' in wanted: result['cx'] = np.array([res.cx[i] for i in range(nstar)])
@@ -1264,6 +1266,7 @@ cdef class Fistar:
             if 'd' in wanted: result['d'] = np.array([res.d[i] for i in range(nstar)])
             if 'k' in wanted: result['k'] = np.array([res.k[i] for i in range(nstar)])
             if 'l' in wanted: result['l'] = np.array([res.l[i] for i in range(nstar)])
+            if 'mom' in wanted: result['mom'] = np.array([res.mom[i * 15] for i in range(nstar)])
             if 'sigma' in wanted: result['sigma'] = np.array([res.sigma[i] for i in range(nstar)])
             if 'delta' in wanted: result['delta'] = np.array([res.delta[i] for i in range(nstar)])
             if 'kappa' in wanted: result['kappa'] = np.array([res.kappa[i] for i in range(nstar)])
@@ -1315,12 +1318,12 @@ cdef class Fistar:
                                'flux': pos_flux_out, 'ferr': pos_ferr_out})
             out_dict['table'] = pos_table
 
-        free(res.ix); free(res.iy); free(res.cx); free(res.cy)
+        free(res.id); free(res.ix); free(res.iy); free(res.cx); free(res.cy)
         free(res.cbg); free(res.camp); free(res.cmax)
         if res.npix: free(res.npix)
         free(res.cs); free(res.cd); free(res.ck)
         free(res.x); free(res.y); free(res.bg); free(res.amp)
-        free(res.s); free(res.d); free(res.k); free(res.l)
+        free(res.s); free(res.d); free(res.k); free(res.l); free(res.mom)
         free(res.sigma); free(res.delta); free(res.kappa)
         free(res.fwhm); free(res.ellip); free(res.pa)
         free(res.flux); free(res.noise); free(res.sn); free(res.magnitude)

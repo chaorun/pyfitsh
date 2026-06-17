@@ -1,11 +1,13 @@
 # fistar C API declarations
 cdef extern from "fistar_core.h":
     ctypedef struct fistar_result:
+        int    *id
         double *ix, *iy, *cx, *cy, *cbg, *camp, *cmax
         int    *npix
         double *cs, *cd, *ck
         double *x, *y, *bg, *amp
         double *s, *d, *k, *l
+        double *mom
         double *sigma, *delta, *kappa
         double *fwhm, *ellip, *pa
         double *flux, *noise, *sn, *magnitude

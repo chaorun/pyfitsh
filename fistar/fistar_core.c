@@ -617,6 +617,7 @@ int fistar_search_cy(
     }
 
     #define ALLOC(N) calloc(nstar, sizeof(*(result->N)))
+    result->id    = (int *)calloc(nstar, sizeof(int));
     result->ix    = (double *)ALLOC(ix);
     result->iy    = (double *)ALLOC(iy);
     result->cx    = ALLOC(cx);
@@ -636,6 +637,7 @@ int fistar_search_cy(
     result->d     = ALLOC(d);
     result->k     = ALLOC(k);
     result->l     = ALLOC(l);
+    result->mom   = (double *)calloc(nstar * 15, sizeof(double));
     result->sigma = ALLOC(sigma);
     result->delta = ALLOC(delta);
     result->kappa = ALLOC(kappa);
@@ -659,6 +661,8 @@ int fistar_search_cy(
     for (i = 0; i < nstar; i++) {
         star     *ws  = &stars[i];
         candidate *wc = ws->cand;
+
+        result->id[i]   = i + 1;
 
         /* candidate fields */
         result->ix[i]   = wc ? wc->ix + 1 : 0;
@@ -684,6 +688,9 @@ int fistar_search_cy(
         result->d[i]     = ws->shape.gd;
         result->k[i]     = ws->shape.gk;
         result->l[i]     = ws->shape.gl;
+#define MAX_DEV_COEFF 15
+        { int mj; for (mj = 0; mj < MAX_DEV_COEFF; mj++) result->mom[i * MAX_DEV_COEFF + mj] = ws->shape.mom[mj]; }
+#undef MAX_DEV_COEFF
         result->sigma[i] = ws->gsig;
         result->delta[i] = ws->gdel;
         result->kappa[i] = ws->gkap;
