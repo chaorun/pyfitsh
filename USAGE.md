@@ -49,7 +49,7 @@ result = fa.evaluate('[a](sqrt(a))', {'a': img_a})
 ## Fistar — 星检测与拟合
 
 ```python
-from pyfitsh.fitsh_cy import Fistar
+from pyfitsh import Fistar
 from astropy.io import fits
 import numpy as np
 
@@ -101,7 +101,7 @@ r = fs.do_fistar(img_data, mask=mask_data)
 ### 基本用法
 
 ```python
-from pyfitsh.fitsh_cy import Fiphot
+from pyfitsh import Fiphot
 import numpy as np
 
 stars = np.loadtxt('positions.dat')
@@ -127,13 +127,14 @@ r = fp.photometry(img, stars=stars, col_xy=(1, 2), col_id=0)
 
 ### photometry_from_raw
 
-对应 CLI `--input-raw-photometry`：
+对应 CLI `--input-raw-photometry`。第一个参数应传 3D raw 数组 `(nstar, nap, 12)`，而非 output Table：
 
 ```python
 r = fp.photometry(img, stars=stars, col_xy=(1,2), col_id=0)
-r2 = fp.photometry_from_raw(r.output, subtracted_img)
+raw_3d = r.dict['output_raw_photometry_3d_data']  # shape (nstar, nap, 12)
+r2 = fp.photometry_from_raw(raw_3d, subtracted_img)
 # 可选：kernel 减影模式
-r2 = fp.photometry_from_raw(r.output, subtracted_img,
+r2 = fp.photometry_from_raw(raw_3d, subtracted_img,
                             kernel_spec='gauss:3:3', normalize_kernel=True)
 ```
 
@@ -149,7 +150,7 @@ r = fp.magfit(mag_arr, flux_arr)
 ## Grmatch — 星点匹配
 
 ```python
-from pyfitsh.fitsh_cy import Grmatch
+from pyfitsh import Grmatch
 
 ref = np.loadtxt('ref.cat')
 inp = np.loadtxt('obs.cat')
@@ -203,7 +204,7 @@ r = g.matchpoints(ref_x, ref_y, inp_x, inp_y,
 ## Grtrans — 坐标变换拟合 / 评估
 
 ```python
-from pyfitsh.fitsh_cy import Grtrans
+from pyfitsh import Grtrans
 
 # 拟合变换
 g = Grtrans(order=2, nmiter=5, rejlevel=3.0)
@@ -245,7 +246,7 @@ trans = {
 ## Fitrans — 图像变换
 
 ```python
-from pyfitsh.fitsh_cy import Fitrans
+from pyfitsh import Fitrans
 
 trans = {'type':'polynomial', 'order':1, 'offset':(0.0,0.0), 'scale':1.0,
          'dxfit':[-148.653, 0.99898, 0.04297],
@@ -335,7 +336,7 @@ convolved, mask = fc.fit(ref, img, kernel_dict=kernel_dict)
 ## Firandom — 人工图像生成
 
 ```python
-from pyfitsh.fitsh_cy import Firandom
+from pyfitsh import Firandom
 import numpy as np
 
 fir = Firandom(sx=512, sy=512, gain=2.0, seed=12345,

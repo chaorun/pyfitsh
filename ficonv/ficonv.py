@@ -24,7 +24,7 @@ class Ficonv:
     def __init__(self, kernel=None, iterations=0, rejection_level=3.0,
                  masked=False, weighted=False, background_iterative=False,
                  divide=32, gain=1.0, verbose=False, unity_kernels=False):
-        from pyfitsh.fitsh_cy import Ficonv_ConvolutionOp
+        from pyfitsh.core import Ficonv_ConvolutionOp
         self._op = Ficonv_ConvolutionOp(kernel, iterations, rejection_level,
                                    masked=masked, weighted=weighted,
                                    background_iterative=background_iterative,
