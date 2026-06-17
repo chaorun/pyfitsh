@@ -96,7 +96,9 @@ r = fs.do_fistar(img_data, mask=mask_data)
 
 > **已修复**：PSF type 常量偏移 bug（`_psf_type` 赋值 `native→0` 应为 `native→1`，`integral→1` 应为 `integral→2`，`circle→2` 应为 `circle→3`），该 bug 导致 `pbg`/`pamp` 列为 nan。修复后 `pbg`/`pamp` 与 CLI 输出一致。（2026-06-17）
 > 
-> **待修复**：`input_candidates` 路径中 `fistar_search_cy` 存在野指针崩溃，调用 `Fistar(input_candidates=cands).do_fistar()` 时 `stars[i].cand` 指向已释放内存。根因：`fistar_core.c:382-400` 输入候选路径缺少 `cleanup_candlist` 调用，且第 392-394 行 s/d/k 被默认值覆写。
+> **已修复**：`fistar_core.c` input_candidates 路径三处修复：① 删除 s/d/k 默认值覆写 ② 增加 `cleanup_candlist` 调用 ③ 结果填充循环中 `wc` 指针加边界校验。修复后不再崩溃。（2026-06-17）
+> 
+> **待修复**：`input_candidates` 路径输出行数不匹配（CY=35 vs CLI=49），待排查。
 
 ---
 

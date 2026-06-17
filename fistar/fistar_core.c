@@ -389,14 +389,12 @@ int fistar_search_cy(
             icands[ci].s = cand_ncol >= 3 ? cand_xy[ci * cand_ncol + 2] : 2.0;
             icands[ci].d = cand_ncol >= 4 ? cand_xy[ci * cand_ncol + 3] : 0.0;
             icands[ci].k = cand_ncol >= 5 ? cand_xy[ci * cand_ncol + 4] : 0.0;
-            icands[ci].s = 2.0;   /* default shape */
-            icands[ci].d = 0.0;
-            icands[ci].k = 0.0;
             icands[ci].bg = 0.0;
             icands[ci].flux = 1.0;
         }
         make_star_candidates(icands, in_ncand, cand_radius,
             &img, mask, &cands, &ncand);
+        cleanup_candlist(&cands, &ncand);
         free(icands);
     } else {
         range srcrange, *sr = NULL;
@@ -701,21 +699,22 @@ int fistar_search_cy(
     for (i = 0; i < nstar; i++) {
         star     *ws  = &stars[i];
         candidate *wc = ws->cand;
+        int is_wc = (wc != NULL && wc >= cands && wc < cands + ncand);
 
         result->id[i]   = ws->id;
 
         /* candidate fields */
-        result->ix[i]   = wc ? wc->ix + 1 : 0;
-        result->iy[i]   = wc ? wc->iy + 1 : 0;
-        result->cx[i]   = wc ? wc->cx : 0.0;
-        result->cy[i]   = wc ? wc->cy : 0.0;
-        result->cbg[i]  = wc ? wc->bg : 0.0;
-        result->camp[i] = wc ? wc->amp : 0.0;
-        result->cmax[i] = wc ? wc->peak : 0.0;
-        result->npix[i] = wc ? wc->nipoint : 0;
-        result->cs[i]   = wc ? 0.5 * (wc->sxx + wc->syy) : 0.0;
-        result->cd[i]   = wc ? 0.5 * (wc->sxx - wc->syy) : 0.0;
-        result->ck[i]   = wc ? wc->sxy : 0.0;
+        result->ix[i]   = is_wc ? wc->ix + 1 : 0;
+        result->iy[i]   = is_wc ? wc->iy + 1 : 0;
+        result->cx[i]   = is_wc ? wc->cx : 0.0;
+        result->cy[i]   = is_wc ? wc->cy : 0.0;
+        result->cbg[i]  = is_wc ? wc->bg : 0.0;
+        result->camp[i] = is_wc ? wc->amp : 0.0;
+        result->cmax[i] = is_wc ? wc->peak : 0.0;
+        result->npix[i] = is_wc ? wc->nipoint : 0;
+        result->cs[i]   = is_wc ? 0.5 * (wc->sxx + wc->syy) : 0.0;
+        result->cd[i]   = is_wc ? 0.5 * (wc->sxx - wc->syy) : 0.0;
+        result->ck[i]   = is_wc ? wc->sxy : 0.0;
 
         /* fitted location */
         result->x[i]   = ws->location.gcx;
@@ -740,8 +739,8 @@ int fistar_search_cy(
 
         /* flux / noise */
         result->flux[i]  = ws->flux;
-        result->noise[i] = wc ? wc->noise : 0.0;
-        result->sn[i]    = (wc && wc->noise > 0.0) ? ws->flux / wc->noise : 0.0;
+        result->noise[i] = is_wc ? wc->noise : 0.0;
+        result->sn[i]    = (is_wc && wc->noise > 0.0) ? ws->flux / wc->noise : 0.0;
         /* magnitude (match fistar-io.c fprint_star_mag) */
         result->magnitude[i] = (ws->flux > 0.0)
             ? mag_magnitude - 2.5 * log10(ws->flux / mag_intensity) : 0.0;
