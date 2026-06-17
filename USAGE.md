@@ -94,6 +94,8 @@ r = fs.do_fistar(img_data, mask=mask_data)
 # r.output (Table), r.nstar (int), r.psf (astropy HDU)
 ```
 
+> **已知问题**：gauss 模型下 `l`、`sigma`、`delta`、`kappa`、`fwhm`、`pa`、`flux`、`noise`、`sn` 列与 CLI 输出有差异。根因疑为 `star-model.c` 中 `shape.gl` 赋值逻辑——该文件与 origincode 一致，但 CLI 在 PSF 拟合后更新了 `shape.gl`，Cython 端未同步。`x`、`y`、`bg`、`amp`、`s`、`d`、`k` 完全一致。（挂起）
+
 ---
 
 ## Fiphot — 孔径测光
