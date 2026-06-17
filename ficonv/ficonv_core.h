@@ -1,6 +1,8 @@
 #ifndef FICONV_PIPELINE_H
 #define FICONV_PIPELINE_H
 
+#include "kernel.h"
+
 int ficonv_fit_cy(
     double *ref_data, char *ref_mask,
     double *img_data, char *img_mask,
@@ -54,6 +56,20 @@ int fitsh_ficonv_fit_cy(
     int *prefit_orders,
     int *prefit_ncoeffs,
     double *prefit_coeffs,
+    int *prefit_hsizes,
+    double *prefit_sigmas,
+    int *prefit_bx,
+    int *prefit_by,
+    int prefit_ktype,
     double prefit_ox, double prefit_oy, double prefit_scale);
+
+int kernel_info_read_dicts_in_ficonv(
+    kernellist *kl,
+    int nkernel,
+    double ox, double oy, double scale, int ktype,
+    int *k_types, int *k_orders, int *k_ncoeffs,
+    int *k_hsizes, double *k_sigmas,
+    int *k_bx, int *k_by,
+    double **k_coeffs);
 
 #endif

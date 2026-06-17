@@ -153,9 +153,18 @@ cdef class Ficonv_ConvolutionOp:
         cdef int [:] prefit_orders_v
         cdef int [:] prefit_ncoeffs_v
         cdef double [:] prefit_coeffs_v
+        cdef int [:] prefit_hsizes_v
+        cdef double [:] prefit_sigmas_v
+        cdef int [:] prefit_bx_v
+        cdef int [:] prefit_by_v
+        cdef int prefit_ktype = 1
         cdef int *pf_types = NULL, *pf_orders = NULL, *pf_ncoeffs = NULL
         cdef double *pf_coeffs = NULL
         cdef double pf_ox = 0.0, pf_oy = 0.0, pf_scale = 1.0
+        prefit_hsizes_v = np.zeros(1, dtype=np.int32)
+        prefit_sigmas_v = np.zeros(1, dtype=np.float64)
+        prefit_bx_v = np.zeros(1, dtype=np.int32)
+        prefit_by_v = np.zeros(1, dtype=np.int32)
         if kernel_dict is not None and 'kernels' in kernel_dict:
             kds = kernel_dict['kernels']
             prefit_nk = len(kds)
@@ -180,6 +189,17 @@ cdef class Ficonv_ConvolutionOp:
             pf_ox = g.get('offset', [0.0, 0.0])[0]
             pf_oy = g.get('offset', [0.0, 0.0])[1]
             pf_scale = g.get('scale', 1.0)
+            # 从 kernel_dict 提取 kernel 形状与空间位置参数，供 kernel_info_read_dicts_in_ficonv 使用
+            prefit_ktype = g.get('type', 1)                               # 全局 kernel 类型
+            prefit_hsizes_v = np.zeros(prefit_nk, dtype=np.int32)         # 每核半窗宽（GAUSSIAN）
+            prefit_sigmas_v = np.zeros(prefit_nk, dtype=np.float64)       # 每核 σ（GAUSSIAN）
+            prefit_bx_v = np.zeros(prefit_nk, dtype=np.int32)             # 每核空间位置 bx
+            prefit_by_v = np.zeros(prefit_nk, dtype=np.int32)             # 每核空间位置 by
+            for ki, kd in enumerate(kds):
+                prefit_hsizes_v[ki] = kd.get('hsize', 0)
+                prefit_sigmas_v[ki] = kd.get('sigma', 0.0)
+                prefit_bx_v[ki] = kd.get('bx', 0)
+                prefit_by_v[ki] = kd.get('by', 0)
 
         # output kernel arrays
         cdef int max_k = 32, max_c = 512
@@ -217,8 +237,11 @@ cdef class Ficonv_ConvolutionOp:
             &out_kh_arr[0], &out_ks_arr[0],
             &out_kx_arr[0], &out_ky_arr[0],
             <char*>NULL, 0, 0, <char*>NULL,
-            prefit_nk, pf_types, pf_orders, pf_ncoeffs, pf_coeffs,
-            pf_ox, pf_oy, pf_scale)
+             prefit_nk, pf_types, pf_orders, pf_ncoeffs, pf_coeffs,
+             &prefit_hsizes_v[0], &prefit_sigmas_v[0],
+             &prefit_bx_v[0], &prefit_by_v[0],
+             prefit_ktype,
+             pf_ox, pf_oy, pf_scale)
 
         results = [out_data, out_mask]
 

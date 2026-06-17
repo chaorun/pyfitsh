@@ -37,6 +37,15 @@
 #define __extension__
 #endif
 
+int kernel_info_read_dicts_in_ficonv(
+    kernellist *kl,
+    int nkernel,
+    double ox, double oy, double scale, int ktype,
+    int *k_types, int *k_orders, int *k_ncoeffs,
+    int *k_hsizes, double *k_sigmas,
+    int *k_bx, int *k_by,
+    double **k_coeffs);
+
 /*****************************************************************************/
 
 extern int	is_comment, is_verbose;
@@ -719,7 +728,10 @@ int ficonv_fit_cy(
 
   memset(kl, 0, sizeof(kernellist));
  memset(xl, 0, sizeof(kernellist));
-  if (kernel_spec && create_kernels_from_kernelarg(kernel_spec, kl))
+  /* 两条路径互斥：预拟合数据（来自 kernel_dict）与内核规格字符串（-k 参数） */
+  if (prefit_nkernels <= 0      /* 无预拟合数据                            */
+      && kernel_spec             /* 内核规格字符串已提供                    */
+      && create_kernels_from_kernelarg(kernel_spec, kl))  /* 解析规格构建 klist */
    {	r = 1; goto cleanup; }
 
  kl->type = 0;
@@ -964,6 +976,11 @@ int fitsh_ficonv_fit_cy(
     int *prefit_orders,
     int *prefit_ncoeffs,
     double *prefit_coeffs,
+    int *prefit_hsizes,
+    double *prefit_sigmas,
+    int *prefit_bx,
+    int *prefit_by,
+    int prefit_ktype,
     double prefit_ox, double prefit_oy, double prefit_scale)
 {
  int	i,r = 0;
@@ -1026,7 +1043,10 @@ int fitsh_ficonv_fit_cy(
 
   memset(kl, 0, sizeof(kernellist));
  memset(xl, 0, sizeof(kernellist));
-  if (kernel_spec && create_kernels_from_kernelarg(kernel_spec, kl))
+  /* 两条路径互斥：预拟合数据（来自 kernel_dict）与内核规格字符串（-k 参数） */
+  if (prefit_nkernels <= 0      /* 无预拟合数据                            */
+      && kernel_spec             /* 内核规格字符串已提供                    */
+      && create_kernels_from_kernelarg(kernel_spec, kl))  /* 解析规格构建 klist */
    {	r = 1; goto cleanup; }
 
  kl->type = 0;
@@ -1092,25 +1112,22 @@ int fitsh_ficonv_fit_cy(
     */
 
   if (prefit_nkernels > 0 && prefit_coeffs != NULL)
-    {	int ki, co, ci = 0;
-     if (prefit_nkernels != kl->nkernel) {
-         logmsg(1, "prefit: nkernels mismatch (%d vs %d)\n", prefit_nkernels, kl->nkernel);
-         r = 4; goto cleanup;
-     }
-     kl->ox = prefit_ox;
-    kl->oy = prefit_oy;
-    kl->scale = prefit_scale;
-    for (ki = 0; ki < kl->nkernel; ki++)
-     {	kernel *kk = &kl->kernels[ki];
-        int nv = prefit_ncoeffs[ki];
-        if (kk->coeff) free(kk->coeff);
-        kk->coeff = (double *)malloc(nv * sizeof(double));
-        for (co = 0; co < nv; co++)
-            kk->coeff[co] = prefit_coeffs[ci++];
-     }
-    kl->type = 1;
-    kernel_init_images(kl);
-   }
+    {	/* 从预拟合数据构建 klist：构造系数指针数组，调 kernel_info_read_dicts_in_ficonv */
+        double **coeff_ptrs;
+        int ki, ci;
+        coeff_ptrs = (double **)malloc(prefit_nkernels * sizeof(double *));
+        for (ki = 0, ci = 0; ki < prefit_nkernels; ki++) {
+            coeff_ptrs[ki] = &prefit_coeffs[ci];
+            ci += prefit_ncoeffs[ki];
+        }
+        kernel_info_read_dicts_in_ficonv(kl,
+            prefit_nkernels, prefit_ox, prefit_oy, prefit_scale, prefit_ktype,
+            prefit_types, prefit_orders, prefit_ncoeffs,
+            prefit_hsizes, prefit_sigmas,
+            prefit_bx, prefit_by,
+            coeff_ptrs);
+        free(coeff_ptrs);
+    }
   else
 
   r = fit_kernels(&refimg, mr, &img, mi, inmask,
@@ -1242,4 +1259,57 @@ cleanup:
  free(outimg.data);
  free(mr); free(mi); free(mo); if (inmask) free(inmask);
  return r;
+}
+
+int kernel_info_read_dicts_in_ficonv(
+    kernellist *kl,
+    int nkernel,                         /* 对应传入 prefit_nkernels */
+    double ox, double oy, double scale,
+    int ktype,                           /* 对应传入 prefit_ktype */
+    int *k_types,                        /* 对应传入 prefit_types */
+    int *k_orders,                       /* 对应传入 prefit_orders */
+    int *k_ncoeffs,                      /* 对应传入 prefit_ncoeffs */
+    int *k_hsizes,                       /* 对应传入 prefit_hsizes */
+    double *k_sigmas,                    /* 对应传入 prefit_sigmas */
+    int *k_bx,                           /* 对应传入 prefit_bx */
+    int *k_by,                           /* 对应传入 prefit_by */
+    double **k_coeffs)                   /* 由 prefit_coeffs 按 ncoeffs 偏移构造的指针数组 */
+{
+    int i, j;
+
+    memset(kl, 0, sizeof(kernellist));
+    kl->nkernel = nkernel;
+    kl->ox = ox;
+    kl->oy = oy;
+    kl->scale = scale;
+    kl->type = ktype;
+    kl->kernels = (kernel *)calloc(nkernel, sizeof(kernel));
+
+    for (i = 0; i < nkernel; i++)
+    {
+        kernel *k = &kl->kernels[i];
+        k->type = k_types[i];
+        k->order = k_orders[i];
+        k->bx = k_bx ? k_bx[i] : 0;
+        k->by = k_by ? k_by[i] : 0;
+        k->flag = 0;
+        k->target = 0;
+
+        if (k->type == KERNEL_GAUSSIAN)
+        {
+            k->hsize = k_hsizes ? k_hsizes[i] : 0;
+            k->sigma = k_sigmas ? k_sigmas[i] : 0.0;
+        }
+
+        if (k_ncoeffs && k_coeffs && k_coeffs[i])
+        {
+            int nv = k_ncoeffs[i];
+            k->coeff = (double *)malloc(nv * sizeof(double));
+            for (j = 0; j < nv; j++)
+                k->coeff[j] = k_coeffs[i][j];
+        }
+    }
+
+    kernel_init_images(kl);
+    return 0;
 }

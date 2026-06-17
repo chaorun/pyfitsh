@@ -52,5 +52,10 @@ cdef extern from "ficonv_core.h":
         int *prefit_orders,
         int *prefit_ncoeffs,
         double *prefit_coeffs,
+        int *prefit_hsizes,
+        double *prefit_sigmas,
+        int *prefit_bx,
+        int *prefit_by,
+        int prefit_ktype,
         double prefit_ox, double prefit_oy, double prefit_scale) nogil
 
