@@ -94,9 +94,9 @@ r = fs.do_fistar(img_data, mask=mask_data)
 # r.output (Table), r.nstar (int), r.psf (astropy HDU)
 ```
 
-> **已知问题**：gauss 模型下 `l`、`sigma`、`delta`、`kappa`、`fwhm`、`pa`、`flux`、`noise`、`sn` 列与 CLI 输出有差异。根因疑为 `star-model.c` 中 `shape.gl` 赋值逻辑——该文件与 origincode 一致，但 CLI 在 PSF 拟合后更新了 `shape.gl`，Cython 端未同步。`x`、`y`、`bg`、`amp`、`s`、`d`、`k` 完全一致。（挂起）
-> 
 > **已修复**：PSF type 常量偏移 bug（`_psf_type` 赋值 `native→0` 应为 `native→1`，`integral→1` 应为 `integral→2`，`circle→2` 应为 `circle→3`），该 bug 导致 `pbg`/`pamp` 列为 nan。修复后 `pbg`/`pamp` 与 CLI 输出一致。（2026-06-17）
+> 
+> **待修复**：`input_candidates` 路径中 `fistar_search_cy` 存在野指针崩溃，调用 `Fistar(input_candidates=cands).do_fistar()` 时 `stars[i].cand` 指向已释放内存。根因：`fistar_core.c:382-400` 输入候选路径缺少 `cleanup_candlist` 调用，且第 392-394 行 s/d/k 被默认值覆写。
 
 ---
 
