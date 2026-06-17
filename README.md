@@ -1,5 +1,8 @@
 # pyfitsh
 
+> **标注**：本项目为 [fitsh](https://www.fitsh.net/) 的复刻版，遵循原始 CLI 的行为约束。
+> 本项目采用 OpenCode + DeepSeek V4 模型在人工指导下完成。
+
 fitsh C 天文软件管线的 Cython 移植版本。通过 Python 调用 `fiarith`（逐像素算术表达式）、`fistar`（星检测/拟合）、`fiphot`（孔径测光）、`grmatch`（星点匹配）、`fitrans`（图像变换）、`ficonv`（图像卷积/减影）、`firandom`（人工图像生成）。
 
 ## 构建
