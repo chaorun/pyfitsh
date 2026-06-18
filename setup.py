@@ -144,6 +144,10 @@ fiarith_ext = Extension(
 setup(
     name="pyfitsh",
     version="0.01",
+    license="GPL-3.0-or-later",
+    classifiers=[
+        "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    ],
     ext_modules=cythonize(
         [ext, fiarith_ext],
         compiler_directives={"language_level": "3"},
