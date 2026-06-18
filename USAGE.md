@@ -65,21 +65,30 @@ print(f'nstar={r.nstar}')
 
 | Python 参数 | CLI 参数 | 说明 |
 |-------------|----------|------|
-| `threshold` | `-t` | 检测阈值 (default 100.0) |
-| `flux_threshold` | `-f` | 通量阈值，>0 时替代 threshold 用于 UPLINK |
+| `threshold` | `-t` | 检测阈值 (ADU, default 100.0) |
+| `flux_threshold` | `-f` | 通量阈值，>0 时替代 threshold |
+| `critical_prominence` | `-p` | UPLINK 算法的临界相对突出度 |
 | `skysigma` | `-d` | 天空背景噪声 |
 | `gain` | `-g` | 探测器增益 (e-/ADU) |
 | `algorithm='uplink'\|'parabolapeak'` | `--algorithm` | 候选检测算法 |
 | `model='elliptic'\|'gauss'\|'deviated'` | `--model` | 星点模型 |
-| `only_candidates=True` | `--only-candidates` | 仅候选检测，跳过拟合 |
-| `psf='native,order=2,grid=4'` | `--psf` | PSF 拟合参数 |
-| `sort='x'\|'y'\|'peak'\|'flux'\|'fwhm'` | `-s` | 排序方式 |
+| `model_order` | `--model-order` | 模型阶数 (deviated 时 2-4) |
+| `it_sym` | `--iterations symmetric=` | 对称拟合迭代次数 (default 4) |
+| `it_gen` | `--iterations general=` | 通用拟合迭代次数 (default 2) |
+| `only_candidates=True` | `--only-candidates` | 仅候选检测，跳过模型拟合 |
+| `psf='native,order=2,grid=4'` | `--psf` | PSF 参数：type,order,grid,halfsize,symmetrize,biquad,kappa,circlewidth,circleorder |
+| `psf_output=True` | `--output-psf` | 输出 PSF 3D FITS 文件 |
+| `sort='x'\|'y'\|'peak'\|'fwhm'\|'amp'\|'flux'\|'noise'\|'s/n'` | `-s` | 排序方式 |
+| `fields='id,x,y,bg,amp,...'` | `--format` | 输出列（逗号分隔） |
 | `section=(x1,x2,y1,y2)` | `--section` | 图像区域限制 |
+| `input_candidates` | `-C\|--input-candidates` | 输入候选文件/数组 (N,2) 或 (N,5) |
+| `candidate_radius` | `--candidate-radius` | 候选半径 (default 2.0) |
+| `input_positions` | `--input-positions` | 输入位置匹配列表 |
+| `mag_flux=(mag, flux)` | `--mag-flux` | 星等-通量校准 (default 10.0, 10000.0) |
 | `output_mark=True` | `--mark-output` | 输出标记图像 |
 | `output_area=True` | `--output-area` | 输出区域图像 |
-| `it_sym` | `--it-sym` | 对称拟合迭代次数 |
-| `it_gen` | `--it-gen` | 通用拟合迭代次数 |
-| `model_order` | `--model-order` | 模型阶数 (0/1/2) |
+| `mark_symbol='dot'` | `--mark-symbol` | 标记符号 |
+| `mark_size` | `--mark-size` | 标记大小 |
 | `verbose=True` | `--verbose` | 详细输出 |
 
 **高斯模型 + PSF 拟合示例**（对应 CLI `-d 5 -f 10000 --model gauss --psf native,order=2`）：
@@ -93,7 +102,12 @@ fs = Fistar(threshold=100.0, flux_threshold=10000.0, skysigma=5.0,
 r = fs.do_fistar(img_data, mask=mask_data)
 # r.output (Table), r.nstar (int), r.psf (astropy HDU)
 ```
-\n> **已知 CLI bug**：`--input-candidates --col-shape 3,4,5` 时 `read_star_candidates` 未读取 cd/ck 列（默认为 0），导致 `make_star_candidates` 中 sxx=syy=cs, sxy=0，形状参数丢失，`peak`/`amp`/`flux` 为 0。这是 origincode CLI 的 bug，非 Cython 端问题。Cython 端通过 `input_candidates` 传入正确 cs/cd/ck 值可获得准确结果。测试脚本中为匹配 CLI 行为，将 cd/ck 列置零。（2026-06-18）
+
+> **已修复**：PSF type 常量偏移 bug（`_psf_type` 赋值 `native→0` 应为 `native→1`，`integral→1` 应为 `integral→2`，`circle→2` 应为 `circle→3`），该 bug 导致 `pbg`/`pamp` 列为 nan。（2026-06-17）
+> 
+> **已修复**：`fistar_core.c` input_candidates 路径三处修复：① 删除 s/d/k 默认值覆写 ② 增加 `cleanup_candlist` 调用 ③ 结果填充循环中 `wc` 指针加边界校验。修复后不再崩溃。（2026-06-17）
+> 
+> **已知 CLI bug**：`--input-candidates --col-shape 3,4,5` 时 `read_star_candidates` 未读取 cd/ck 列（默认为 0），导致 `make_star_candidates` 中 sxx=syy=cs, sxy=0，形状参数丢失，`peak`/`amp`/`flux` 为 0。这是 origincode CLI 的 bug，非 Cython 端问题。Cython 端通过 `input_candidates` 传入正确 cs/cd/ck 值可获得准确结果。测试脚本中为匹配 CLI 行为，将 cd/ck 列置零。（2026-06-18）
 > 
 > **已知差异**：test_04（ficonv from fitted kernel）中卷积图像有 2/4,194,304 像素差异，max_diff=0.107。原因为 `kernel_dict` 在 Python 层 round-trip 后产生浮点精度损失，非算法问题。（2026-06-18）
 
@@ -116,17 +130,24 @@ r = fp.photometry(img, stars=stars, col_xy=(1, 2), col_id=0)
 
 | Python 参数 | CLI 参数 | 说明 |
 |-------------|----------|------|
-| `apertures` | `-a` | 孔径规格 `rad:r_in:r_out` |
-| `gain` | `-g` | 增益 (e-/ADU) |
+| `apertures` | `-a` | 孔径规格 `rad:r_in:r_out`，逗号分隔 |
+| `gain` | `-g` | 增益多项式 (e-/ADU)，支持空间变化 |
+| `gain_vmin` | `--gain-vmin` | 最小增益值 |
 | `mag_flux` | `--mag-flux` | (mag, flux) 零点校准 |
-| `zero` | `--zero` | 星等零点值 |
-| `dark` | `--dark` | 暗场值 |
-| `flat` | `--flat` | 平场值 |
-| `sort` | `-s` | 排序方式 |
-| `output_raw=True` | `--output-raw` | 输出 raw 测光数据 |
-| `cols_xy` | (N/A) | 输入星表中 x,y 列索引 |
-| `cols_id` | (N/A) | 输入星表中 ID 列索引 |
-| `mask` | `-K` | 蒙版 |
+| `sky_fit` | `--sky-fit` | 天空拟合: mean\|median\|mode,iterations=N,sigma=S |
+| `correlation_length` | `--correlation-length` | 背景相关长度 (default 1.0) |
+| `zoom` | `-z` | 坐标/孔径缩放因子 |
+| `serial` | `--serial` | 序列标识符 |
+| `mask_ignore` | `--aperture-mask-ignore` | 孔径内忽略的 mask 类型: saturated,hot,outer |
+| `nan='-'` | `--nan` | 坏测光标记字符串 |
+| `output_raw=True` | `--output-raw-photometry` | 输出 raw 测光数据 |
+| `cols_xy` | `--col-xy` | 输入星表中 x,y 列索引 (1-indexed) |
+| `cols_id` | `--col-id` | 输入星表中 ID 列索引 |
+| `cols_ap` | `--col-ap` | 输入星表中每星自定义孔径列 |
+| `cols_mag` | `--col-mag` | 参考星等列 |
+| `cols_col` | `--col-col` | 测光颜色列 |
+| `cols_err` | `--col-err` | 星等误差列 |
+| `mask` | `-M` | 蒙版图像 |
 
 ### photometry_from_raw
 
@@ -265,6 +286,14 @@ output, mask = ft.apply(img)
 | `method='bilinear'` | `-l` / `-c` / `-m` / `-k` | 插值方法 |
 | `size=(sx,sy)` | `-s` | 输出图像尺寸 |
 | `offset=(x,y)` | `-f` | 输出图像零点坐标 |
+| `zoom` | `-z` | 整数倍放大（双二次插值，保通量） |
+| `shrink` | `-r` | 整数倍缩小 |
+| `median_shrink` | `-d` | 缩小使用中值平均 |
+| `smooth` | `-a` | 图像平滑参数 |
+| `noise` | `-n` | 噪声估计图 |
+| `layer` | `-y` | 数据立方体切层 |
+| `explode` | `-x` | 数据立方体展开 |
+| `bitpix` | `-b` | 输出 FITS bitpix |
 
 插值方法对照：
 
@@ -298,7 +327,7 @@ convolved, mask, subtracted, kernel_dict = fc.fit(ref, img, img_mask=img_mask,
 
 | Python 参数 | CLI 参数 | 说明 |
 |-------------|----------|------|
-| `kernel` | `-k` | kernel 规格字符串 |
+| `kernel` | `-k` | kernel 规格字符串，分号分隔 |
 | `iterations` | `-n` | 拒绝迭代次数 |
 | `rejection_level` | `-s` | 拒绝 sigma |
 | `masked` | `-m` | 蒙版拟合模式 |
@@ -307,6 +336,7 @@ convolved, mask, subtracted, kernel_dict = fc.fit(ref, img, img_mask=img_mask,
 | `divide` | `-d` | 分块因子 (default 32) |
 | `gain` | `-g` | 增益 (e-/ADU) |
 | `unity_kernels` | `-u` | 归一化 identity kernel |
+| `verbose` | `--verbose` | 详细输出 |
 
 **用 kernel_dict 跳过拟合**（等价 CLI `--input-kernel-list`）：
 
@@ -354,16 +384,18 @@ img = result.image
 |-------------|----------|------|
 | `sx, sy` | `--size` | 图像尺寸 |
 | `gain` | `--gain` | 增益 (e-/ADU) |
-| `background` | `--sky` | 背景表达式 |
+| `background` | `--sky` | 背景表达式（支持 x,y 函数） |
 | `background_stddev` | `--sky-noise` | 背景额外噪声 |
 | `is_photnoise` | `--photon-noise` | 光子噪声仿真 |
-| `seed` | `--seed` | 通用随机种子（fallback for seed_noise/seed_spatial/seed_photon） |
+| `seed` | `--seed` | 通用随机种子 |
 | `seed_noise` | `--seed-noise` | 背景噪声种子 |
 | `seed_spatial` | `--seed-spatial` | 空间坐标种子 |
 | `seed_photon` | `--seed-photon` | 光子噪声种子 |
-| `dontquantize` | (默认) | 默认 True，匹配 CLI |
-| `method=1` | `--integral` | 积分绘制模式 |
 | `zoom` | `--zoom` | 过采样因子 |
+| `method=1` | `--integral` | 积分绘制模式 (default) |
+| `method=0` | `--monte-carlo` | Monte-Carlo 绘制模式 |
+| `dontquantize=True` | -- | 默认不量化 (匹配 CLI `--no-quantize`) |
+| `nsuppress=10000.0` | `--noise-suppression` | 积分边界抑制级别 |
 
 **Star 输入格式**：
 
