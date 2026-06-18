@@ -128,7 +128,7 @@ ext = Extension(
     sources=[os.path.join(HERE, "core.pyx")]
           + [os.path.join(HERE, s) for s in sources]
            + [os.path.join(HERE, "ficalib", "ficalib_core.c"),
-              os.path.join(HERE, "ficalib", "combine.c"),
+              os.path.join(HERE, "algorithms", "combine.c"),
               os.path.join(HERE, "math", "splinefit.c"),
               os.path.join(HERE, "fiign", "fiign_core.c")],
     include_dirs=[os.path.join(HERE,"algorithms"), HERE, MATH, FIT, SPL, IO_DIR, LINK, INDEX, EXPINT, INTERSEC, ELLIPTIC, FIPHOT, FICONV, FISTAR, FITRANS, GRMATCH, GRTRANS, FIRANDOM, FIARITH, PSN_DIR, DFT_DIR, FICALIB, FIIGN],
