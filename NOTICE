@@ -1,0 +1,20 @@
+pyfitsh
+======
+
+pyfitsh is a Python/Cython interface and compatibility reimplementation based on
+FITSH.
+
+Upstream FITSH:
+  Website: https://www.fitsh.net/
+  Author: András Pál
+  License: GNU General Public License, version 3 or later (GPL-3.0-or-later)
+
+Portions of this repository are derived from, adapted from, or interface with
+the FITSH source code.
+
+Original FITSH copyright notices are preserved in the corresponding source
+files where applicable. Modifications for pyfitsh are copyright the pyfitsh
+contributors.
+
+This program is distributed under the terms of the GNU General Public License,
+version 3 or later. See LICENSE for details.
