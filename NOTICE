@@ -18,3 +18,378 @@ contributors.
 
 This program is distributed under the terms of the GNU General Public License,
 version 3 or later. See LICENSE for details.
+    fistar/psf-base.c
+      upstream path: src/psf-base.c
+      md5: 96d0c2bd13258176a602371140f7aa56
+      status: identical to FITSH 0.9.4
+
+    fistar/star-draw.c
+      upstream path: src/star-draw.c
+      md5: de1651c69874704c9a0b1186c96caab6
+      status: identical to FITSH 0.9.4
+
+    algorithms/statistics.c
+      upstream path: src/statistics.c
+      md5: 54b4003c9b39d41fddf860d4199e20d4
+      status: identical to FITSH 0.9.4
+
+    algorithms/str.c
+      upstream path: src/str.c
+      md5: a2662815fd985c7f75b6eecd558c2a30
+      status: identical to FITSH 0.9.4
+
+    algorithms/tensor.c
+      upstream path: src/tensor.c
+      md5: 53ce10ff802231a527598e13d87a0ac0
+      status: identical to FITSH 0.9.4
+
+    algorithms/fbase.c
+      upstream path: src/fbase.c
+      md5: 6d0efb19e6a68e2e1794bd31db40cfa9
+      status: identical to FITSH 0.9.4
+
+    algorithms/projection.c
+      upstream path: src/projection.c
+      md5: 0c1e64fc830cb13237a25621ae215f5e
+      status: identical to FITSH 0.9.4
+
+    algorithms/tokenize.c
+      upstream path: src/io/tokenize.c
+      md5: be1885679d63799f07fb717582998393
+      status: identical to FITSH 0.9.4
+
+    math/expint/expint.c
+      upstream path: src/math/expint/expint.c
+      md5: 9a20a0cee391c78a9394513bae9b746a
+      status: identical to FITSH 0.9.4
+
+    math/spmatrix.c
+      upstream path: src/math/spmatrix.c
+      md5: ee808ce5bb3e3afb6f36d29e1c201c4e
+      status: identical to FITSH 0.9.4
+
+    math/poly.c
+      upstream path: src/math/poly.c
+      md5: 3c7996bfe792e9f35b0e538aa92f63bd
+      status: identical to FITSH 0.9.4
+
+    math/elliptic/ntiq.c
+      upstream path: src/math/elliptic/ntiq.c
+      md5: a1dd7c5d48346651148732cfeb85250b
+      status: identical to FITSH 0.9.4
+
+    math/elliptic/elliptic.c
+      upstream path: src/math/elliptic/elliptic.c
+      md5: 9f2e2a27865282462a6eeeb8a7471da3
+      status: identical to FITSH 0.9.4
+
+    math/dft/pbfft.c
+      upstream path: src/math/dft/pbfft.c
+      md5: 29b62ceeebed68c97cbc6d7d51fd8258
+      status: identical to FITSH 0.9.4
+
+    math/fit/lmfit.c
+      upstream path: src/math/fit/lmfit.c
+      md5: b3f8c56a31c7f6e2d5dc0a23f9fa62a2
+      status: identical to FITSH 0.9.4
+
+    math/fit/downhill.c
+      upstream path: src/math/fit/downhill.c
+      md5: 97d57d05e01614802789c88988466c25
+      status: identical to FITSH 0.9.4
+
+    math/trimatch.c
+      upstream path: src/math/trimatch.c
+      md5: ea62ed02cdf18fa5c16dbe231d668db4
+      status: identical to FITSH 0.9.4
+
+    math/convexhull.c
+      upstream path: src/math/convexhull.c
+      md5: 75988c3902e4a8409500c37c26797795
+      status: identical to FITSH 0.9.4
+
+    math/polygon.c
+      upstream path: src/math/polygon.c
+      md5: 27a02ac4b9405fc7d9d26465308f21ee
+      status: identical to FITSH 0.9.4
+
+    math/delaunay.c
+      upstream path: src/math/delaunay.c
+      md5: 58f8e3ee32d023ad940a5bfff1a22840
+      status: identical to FITSH 0.9.4
+
+    math/spline/biquad-isc.c
+      upstream path: src/math/spline/biquad-isc.c
+      md5: 3cca6e8302743cf51120acb061ac2507
+      status: identical to FITSH 0.9.4
+
+    math/spline/bicubic.c
+      upstream path: src/math/spline/bicubic.c
+      md5: f50e503ab5dc365f135122ed2658b58d
+      status: identical to FITSH 0.9.4
+
+    math/spline/spline.c
+      upstream path: src/math/spline/spline.c
+      md5: 67fb33604abf697bc938c255ec9a0cac
+      status: identical to FITSH 0.9.4
+
+    math/spline/biquad.c
+      upstream path: src/math/spline/biquad.c
+      md5: 895e341df84a2bc46341137cb0908bb6
+      status: identical to FITSH 0.9.4
+
+    math/cpmatch.c
+      upstream path: src/math/cpmatch.c
+      md5: 70729e2e43a9204b676d88eea28cda84
+      status: identical to FITSH 0.9.4
+
+    math/polyfit.c
+      upstream path: src/math/polyfit.c
+      md5: 1de1673092b74d17265c8355c20cd134
+      status: identical to FITSH 0.9.4
+
+    math/tpoint.c
+      upstream path: src/math/tpoint.c
+      md5: 1ba9c3f14121921b9070d9fcdde17dc5
+      status: identical to FITSH 0.9.4
+
+    math/intersec/intersec.c
+      upstream path: src/math/intersec/intersec.c
+      md5: bf69db650594217a338d21876555b83e
+      status: identical to FITSH 0.9.4
+
+    math/intersec/intersec-cri.c
+      upstream path: src/math/intersec/intersec-cri.c
+      md5: c06b01975048676f0a2d2b47bce5c9d9
+      status: identical to FITSH 0.9.4
+
+    link/linkblock.c
+      upstream path: src/link/linkblock.c
+      md5: acd091ab1ccb5d77a88ab3315e98d042
+      status: identical to FITSH 0.9.4
+
+    link/linkpoint.c
+      upstream path: src/link/linkpoint.c
+      md5: b2bd7d8daeac7665ec0f9fb057939b43
+      status: identical to FITSH 0.9.4
+
+    link/floodfill.c
+      upstream path: src/link/floodfill.c
+      md5: 12e61eed25f076721c54bb9aa9fd0dcd
+      status: identical to FITSH 0.9.4
+
+    index/multiindex.c
+      upstream path: src/index/multiindex.c
+      md5: d9cbab62644381b860b7c6744cc19d4f
+      status: identical to FITSH 0.9.4
+
+    index/sort.c
+      upstream path: src/index/sort.c
+      md5: 9deab77332ab50ed79baf89fdf95b77c
+      status: identical to FITSH 0.9.4
+
+    fiphot/magnitude.c
+      upstream path: src/magnitude.c
+      md5: 290a6d76f1fa21b5d839914f87e11348
+      status: identical to FITSH 0.9.4
+
+    config.h
+      upstream path: config.h
+      md5: 5401768d023afe1a3091b87fc336f307
+      status: identical to FITSH 0.9.4
+
+    fistar/psf-base.h
+      upstream path: src/psf-base.h
+      md5: 2dfcc50bdae7c9965219970b01b0b1b7
+      status: identical to FITSH 0.9.4
+
+    fistar/psf.h
+      upstream path: src/psf.h
+      md5: 308541df4606f4169ff3a3478124f628
+      status: identical to FITSH 0.9.4
+
+    fistar/star-model.h
+      upstream path: src/star-model.h
+      md5: 6cd9044d452bb0a7b2c28775159bb243
+      status: identical to FITSH 0.9.4
+
+    algorithms/projection.h
+      upstream path: src/projection.h
+      md5: 36765404a89261c7ea45a9618f471898
+      status: identical to FITSH 0.9.4
+
+    algorithms/fbase.h
+      upstream path: src/fbase.h
+      md5: 62ab3690aa1b5408a220b966d85e5ed0
+      status: identical to FITSH 0.9.4
+
+    algorithms/tokenize.h
+      upstream path: src/io/tokenize.h
+      md5: 6b2647037663e8fcbd6976e6a3112323
+      status: identical to FITSH 0.9.4
+
+    algorithms/statistics.h
+      upstream path: src/statistics.h
+      md5: eda27797f54d8c2d26c69765aecbf70f
+      status: identical to FITSH 0.9.4
+
+    algorithms/transform.h
+      upstream path: src/transform.h
+      md5: 41f92f38315c90b5f4e0f3cddbd0ce73
+      status: identical to FITSH 0.9.4
+
+    algorithms/str.h
+      upstream path: src/str.h
+      md5: e282631d754398423ac6d8735c694e21
+      status: identical to FITSH 0.9.4
+
+    algorithms/tensor.h
+      upstream path: src/tensor.h
+      md5: 4095c7f6d8b5554bb61c741d1012bea9
+      status: identical to FITSH 0.9.4
+
+    math/expint/expint.h
+      upstream path: src/math/expint/expint.h
+      md5: b61957a7310cf83340c8398cbfdb866b
+      status: identical to FITSH 0.9.4
+
+    math/polygon.h
+      upstream path: src/math/polygon.h
+      md5: df4952991538406cf6f93aa0b956068f
+      status: identical to FITSH 0.9.4
+
+    math/elliptic/elliptic.h
+      upstream path: src/math/elliptic/elliptic.h
+      md5: 4c9cf7607cdf816046d98d17e7b98203
+      status: identical to FITSH 0.9.4
+
+    math/elliptic/ntiq.h
+      upstream path: src/math/elliptic/ntiq.h
+      md5: 3ba1cd68141d78545eb7e797f41f7316
+      status: identical to FITSH 0.9.4
+
+    math/cpmatch.h
+      upstream path: src/math/cpmatch.h
+      md5: 08e1a093631ee76561fad67e471210f0
+      status: identical to FITSH 0.9.4
+
+    math/dft/pbfft.h
+      upstream path: src/math/dft/pbfft.h
+      md5: e143ab9d1753e51ffb5b95468132dffe
+      status: identical to FITSH 0.9.4
+
+    math/point.h
+      upstream path: src/math/point.h
+      md5: 74fc7b1135e8471a71e39ebf538aafa7
+      status: identical to FITSH 0.9.4
+
+    math/fit/downhill.h
+      upstream path: src/math/fit/downhill.h
+      md5: ddff7cf9c355e655038482cb00394675
+      status: identical to FITSH 0.9.4
+
+    math/fit/lmfit.h
+      upstream path: src/math/fit/lmfit.h
+      md5: 4945ec3ecb7da9a19ce465d471ec6056
+      status: identical to FITSH 0.9.4
+
+    math/delaunay.h
+      upstream path: src/math/delaunay.h
+      md5: db01f2fdf4290ee56285776e2d133de9
+      status: identical to FITSH 0.9.4
+
+    math/tpoint.h
+      upstream path: src/math/tpoint.h
+      md5: 26a3714f9840847762e7310dabe20a43
+      status: identical to FITSH 0.9.4
+
+    math/polyfit.h
+      upstream path: src/math/polyfit.h
+      md5: 849d2d021e4dc25c12f205a2263cc7c7
+      status: identical to FITSH 0.9.4
+
+    math/spmatrix.h
+      upstream path: src/math/spmatrix.h
+      md5: a8bcef93bae3ac58ed8de003d80ca9b9
+      status: identical to FITSH 0.9.4
+
+    math/spline/biquad.h
+      upstream path: src/math/spline/biquad.h
+      md5: 3d36c38b8cfd4c325d89012b0d03d00b
+      status: identical to FITSH 0.9.4
+
+    math/spline/spline.h
+      upstream path: src/math/spline/spline.h
+      md5: 47aac9f691b9a791f8fb8f3e36933293
+      status: identical to FITSH 0.9.4
+
+    math/spline/biquad-isc.h
+      upstream path: src/math/spline/biquad-isc.h
+      md5: 55531a081406153db817d4df74376795
+      status: identical to FITSH 0.9.4
+
+    math/spline/bicubic.h
+      upstream path: src/math/spline/bicubic.h
+      md5: 361cbd375ef0be90eb9524b550b9dfce
+      status: identical to FITSH 0.9.4
+
+    math/poly.h
+      upstream path: src/math/poly.h
+      md5: 8570952c07586fc86a911754772cacdf
+      status: identical to FITSH 0.9.4
+
+    math/convexhull.h
+      upstream path: src/math/convexhull.h
+      md5: 02da438ce84795319fcf49fef91f9d61
+      status: identical to FITSH 0.9.4
+
+    math/trimatch.h
+      upstream path: src/math/trimatch.h
+      md5: f3b84574a2432cf615cb86e3c006973f
+      status: identical to FITSH 0.9.4
+
+    math/intersec/intersec.h
+      upstream path: src/math/intersec/intersec.h
+      md5: ff9cc651dbec62e52495a26ec74ae4dd
+      status: identical to FITSH 0.9.4
+
+    math/intersec/intersec-cri.h
+      upstream path: src/math/intersec/intersec-cri.h
+      md5: 5761e8ed0e98cdb347ad1983d93174c9
+      status: identical to FITSH 0.9.4
+
+    link/floodfill.h
+      upstream path: src/link/floodfill.h
+      md5: b47e4dc9a3a2bdba39d5d16ee2a7f554
+      status: identical to FITSH 0.9.4
+
+    link/linkpoint.h
+      upstream path: src/link/linkpoint.h
+      md5: 4b2c45253679e3861cd073897d00c5a4
+      status: identical to FITSH 0.9.4
+
+    link/linkblock.h
+      upstream path: src/link/linkblock.h
+      md5: e61a1b67d0b196205cdbed7c16cf2425
+      status: identical to FITSH 0.9.4
+
+    firandom/random.h
+      upstream path: include/random/random.h
+      md5: 3a74997e7716a3024cac41345f37a2a8
+      status: identical to FITSH 0.9.4
+
+    index/sort.h
+      upstream path: src/index/sort.h
+      md5: 95600cdae27a2b7ee51db9efaa9d74d4
+      status: identical to FITSH 0.9.4
+
+    index/multiindex.h
+      upstream path: src/index/multiindex.h
+      md5: 2f52f9b9702ccb7cd128b819fc00d396
+      status: identical to FITSH 0.9.4
+
+    fiphot/magnitude.h
+      upstream path: src/magnitude.h
+      md5: f6b945df64559e2bc114808680e6d13c
+      status: identical to FITSH 0.9.4
+
