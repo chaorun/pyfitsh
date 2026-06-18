@@ -13,7 +13,10 @@ def do_test():
     from pyfitsh import Fiphot
 
     ref_data = fits.getdata(REF_IMG).astype(np.float64)
-    stars = np.loadtxt("cli_test_fiphot_positions.dat", ndmin=2)
+    stars_tab = Table.read("cli_test_fiphot_positions.dat",
+                           format='ascii.no_header',
+                           names=['id', 'x', 'y'])
+    stars = np.column_stack([stars_tab['id'], stars_tab['x'], stars_tab['y']])
     # stars columns: id(0), x(1), y(2)
     fp = Fiphot(apertures='10:18:12', gain='2', mag_flux=(10.0, 10000.0),
                 sky_fit='median,iterations=2,sigma=3')
@@ -30,7 +33,9 @@ def do_test():
     cli_order = ['id','x','y','bg','bg_err','flux','flux_err','mag','mag_err']
     cy_reordered = np.column_stack([cy_arr[:, cy_idx[c]] for c in cli_order])
 
-    cli_data = np.loadtxt("cli_test_fiphot_single.cat", dtype=np.float64)
+    cli_tab = Table.read("cli_test_fiphot_single.cat", format='ascii.no_header',
+                         names=cli_order)
+    cli_data = np.column_stack([np.asarray(cli_tab[c], dtype=np.float64) for c in cli_order])
 
     if cy_reordered.shape != cli_data.shape:
         return False, f"shape: CY={cy_reordered.shape} CLI={cli_data.shape}"

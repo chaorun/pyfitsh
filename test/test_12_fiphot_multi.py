@@ -13,7 +13,10 @@ def do_test():
     from pyfitsh import Fiphot
 
     ref_data = fits.getdata(REF_IMG).astype(np.float64)
-    stars = np.loadtxt("cli_test_fiphot_positions.dat", ndmin=2)
+    stars_tab = Table.read("cli_test_fiphot_positions.dat",
+                           format='ascii.no_header',
+                           names=['id', 'x', 'y'])
+    stars = np.column_stack([stars_tab['id'], stars_tab['x'], stars_tab['y']])
 
     fp = Fiphot(apertures='8:18:12,10:18:12,12:20:15,15:25:15',
                 gain='2', mag_flux=(10.0, 10000.0))
@@ -28,9 +31,13 @@ def do_test():
     cy_raw_cols = ['id','x','y','flux','flux_err','bg','bg_err','mag','mag_err']
     cy_reorder = [0, 1, 2, 5, 6, 3, 4, 7, 8]  # cy_raw_cols index -> cy_cols order
 
-    # CLI: first aperture has 9 cols (id,x,y + 6), subsequent have 6 cols
-    # Total: 9 + 6*3 = 27
-    cli_data = np.loadtxt("cli_test_fiphot_multiap.cat", ndmin=2)
+    # CLI: first aperture 9 cols, subsequent 6 cols each → 9+6*3=27
+    cli_names = ['id','x','y','bg','bg_err','flux','flux_err','mag','mag_err']
+    for a in range(2, nap+1):
+        cli_names += [f'{c}_a{a}' for c in ['bg','bg_err','flux','flux_err','mag','mag_err']]
+    cli_tab = Table.read("cli_test_fiphot_multiap.cat", format='ascii.no_header',
+                         names=cli_names)
+    cli_data = np.column_stack([np.asarray(cli_tab[c], dtype=np.float64) for c in cli_names])
     nstar = cli_data.shape[0]
 
     cy_nap = np.zeros(cli_data.shape)

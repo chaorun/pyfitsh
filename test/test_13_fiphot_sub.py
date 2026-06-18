@@ -27,7 +27,10 @@ def do_test():
     from pyfitsh.ficonv.ficonv import Ficonv
 
     ref_data, ref_mask = load_with_mask(REF_IMG)
-    stars = np.loadtxt("cli_test_fiphot_positions.dat", ndmin=2)
+    stars_tab = Table.read("cli_test_fiphot_positions.dat",
+                           format='ascii.no_header',
+                           names=['id', 'x', 'y'])
+    stars = np.column_stack([stars_tab['id'], stars_tab['x'], stars_tab['y']])
 
     fp = Fiphot(apertures='10:18:12', gain='2', mag_flux=(10.0, 10000.0),
                 sky_fit='median,iterations=2,sigma=3')
