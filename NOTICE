@@ -395,150 +395,116 @@ version 3 or later. See LICENSE for details.
 
 
 
-Files derived from FITSH with modifications
--------------------------------------------
-
-The following files are derived from FITSH 0.9.4 but have been modified for
-pyfitsh. Their MD5 checksums are not expected to match upstream.
 
   algorithms/kernel-base.c
-    upstream path: src/kernel-base.c
     status: modified for pyfitsh
-    modification summary: Cython interface adaptation / build integration / bug-compatible wrapper
+    modification summary: fitsimage→image type rename; header path adaptation; removed file I/O
 
   algorithms/kernel-io.c
-    upstream path: src/kernel-io.c
     status: modified for pyfitsh
-    modification summary: Cython interface adaptation / build integration / bug-compatible wrapper
+    modification summary: header path adaptation; removed file I/O; added id field
 
   fiphot/apphot.c
-    upstream path: src/apphot.c
     status: modified for pyfitsh
-    modification summary: Cython interface adaptation / build integration / bug-compatible wrapper
+    modification summary: fitsimage→image type rename; header path adaptation
 
   fiphot/fiphot-io.c
-    upstream path: src/fiphot-io.c
     status: modified for pyfitsh
-    modification summary: Cython interface adaptation / build integration / bug-compatible wrapper
+    modification summary: header path adaptation; removed file I/O; added id field
 
   fiphot/weight-gen.c
-    upstream path: src/weight-gen.c
     status: modified for pyfitsh
-    modification summary: Cython interface adaptation / build integration / bug-compatible wrapper
+    modification summary: header path adaptation
 
   fiphot/weight-star.c
-    upstream path: src/weight-star.c
     status: modified for pyfitsh
-    modification summary: Cython interface adaptation / build integration / bug-compatible wrapper
+    modification summary: header path adaptation
 
   firandom/firandom-eval.c
-    upstream path: src/firandom-eval.c
     status: modified for pyfitsh
-    modification summary: Cython interface adaptation / build integration / bug-compatible wrapper
+    modification summary: header path adaptation
 
   firandom/random.c
-    upstream path: librandom/random.c
     status: modified for pyfitsh
-    modification summary: Cython interface adaptation / build integration / bug-compatible wrapper
+    modification summary: build integration: dead code comment or macro rename
 
   fistar/background.c
-    upstream path: src/background.c
     status: modified for pyfitsh
-    modification summary: Cython interface adaptation / build integration / bug-compatible wrapper
+    modification summary: fitsimage→image type rename; header path adaptation
 
   fistar/psf-determine.c
-    upstream path: src/psf-determine.c
     status: modified for pyfitsh
-    modification summary: Cython interface adaptation / build integration / bug-compatible wrapper
+    modification summary: fitsimage→image type rename; header path adaptation
 
   fistar/star-base.c
-    upstream path: src/star-base.c
     status: modified for pyfitsh
-    modification summary: Cython interface adaptation / build integration / bug-compatible wrapper
+    modification summary: fitsimage→image type rename; added id field
 
   fistar/star-cand-biq.c
-    upstream path: src/star-cand-biq.c
     status: modified for pyfitsh
-    modification summary: Cython interface adaptation / build integration / bug-compatible wrapper
+    modification summary: fitsimage→image type rename; header path adaptation; added id field
 
   fistar/star-cand-lnk.c
-    upstream path: src/star-cand-lnk.c
     status: modified for pyfitsh
-    modification summary: Cython interface adaptation / build integration / bug-compatible wrapper
+    modification summary: fitsimage→image type rename; header path adaptation; added id field
 
   fistar/star-cand-pp.c
-    upstream path: src/star-cand-pp.c
     status: modified for pyfitsh
-    modification summary: Cython interface adaptation / build integration / bug-compatible wrapper
+    modification summary: fitsimage→image type rename; header path adaptation; added id field
 
   fistar/star-cand-trb.c
-    upstream path: src/star-cand-trb.c
     status: modified for pyfitsh
-    modification summary: Cython interface adaptation / build integration / bug-compatible wrapper
+    modification summary: fitsimage→image type rename; header path adaptation; added id field
 
   fistar/star-model.c
-    upstream path: src/star-model.c
     status: modified for pyfitsh
-    modification summary: Cython interface adaptation / build integration / bug-compatible wrapper
+    modification summary: fitsimage→image type rename; header path adaptation; added id field
 
   algorithms/kernel.h
-    upstream path: src/kernel.h
     status: modified for pyfitsh
-    modification summary: Cython interface adaptation / build integration / bug-compatible wrapper
+    modification summary: fitsimage→image type rename
 
   common.h
-    upstream path: src/common.h
     status: modified for pyfitsh
-    modification summary: Cython interface adaptation / build integration / bug-compatible wrapper
+    modification summary: fitsimage→image type rename; header path adaptation
 
   fiphot/apphot.h
-    upstream path: src/apphot.h
     status: modified for pyfitsh
-    modification summary: Cython interface adaptation / build integration / bug-compatible wrapper
+    modification summary: fitsimage→image type rename
 
   fiphot/fiphot.h
-    upstream path: src/fiphot.h
     status: modified for pyfitsh
-    modification summary: Cython interface adaptation / build integration / bug-compatible wrapper
+    modification summary: build integration: dead code comment or macro rename
 
   fiphot/weight.h
-    upstream path: src/weight.h
     status: modified for pyfitsh
-    modification summary: Cython interface adaptation / build integration / bug-compatible wrapper
+    modification summary: header path adaptation
 
   firandom/firandom.h
-    upstream path: src/firandom.h
     status: modified for pyfitsh
-    modification summary: Cython interface adaptation / build integration / bug-compatible wrapper
+    modification summary: fitsimage→image type rename; added id field
 
   fistar/background.h
-    upstream path: src/background.h
     status: modified for pyfitsh
-    modification summary: Cython interface adaptation / build integration / bug-compatible wrapper
+    modification summary: fitsimage→image type rename
 
   fistar/fistar.h
-    upstream path: src/fistar.h
     status: modified for pyfitsh
-    modification summary: Cython interface adaptation / build integration / bug-compatible wrapper
+    modification summary: fitsimage→image type rename
 
   fistar/psf-determine.h
-    upstream path: src/psf-determine.h
     status: modified for pyfitsh
-    modification summary: Cython interface adaptation / build integration / bug-compatible wrapper
+    modification summary: fitsimage→image type rename; header path adaptation
 
   fistar/psf-io.h
-    upstream path: src/psf-io.h
     status: modified for pyfitsh
-    modification summary: Cython interface adaptation / build integration / bug-compatible wrapper
+    modification summary: fitsimage→image type rename; header path adaptation
 
   fistar/stars.h
-    upstream path: src/stars.h
     status: modified for pyfitsh
-    modification summary: Cython interface adaptation / build integration / bug-compatible wrapper
+    modification summary: fitsimage→image type rename; header path adaptation; added id field
 
   fitsh.h
-    upstream path: src/fitsh.h
     status: modified for pyfitsh
-    modification summary: Cython interface adaptation / build integration / bug-compatible wrapper
-
+    modification summary: build integration: dead code comment or macro rename
 
