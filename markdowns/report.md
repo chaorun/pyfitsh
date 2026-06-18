@@ -15,14 +15,26 @@
 
 **根因**: `core.pyx` 中 `_psf_type` 赋值偏移了 1（`native→0` 应为 `1`），`psf_determine` 收到 0 走 `default: return -1`，不填充 `tpd.coeff`。
 
-## 二、二进制 dump 的教训
+## 二、二进制 dump 的惨痛教训
 
+**最大错误**：用硬编码零值假装 dump。
+
+在 dump `tpd` 结构体时，写了：
+```c
+int ti=0; double td=0.0;
+fwrite(&ti,4,1,df); fwrite(&ti,4,1,df); fwrite(&ti,4,1,df);
+fwrite(&td,8,1,df); fwrite(&td,8,1,df); fwrite(&td,8,1,df);
+```
+这是栈上的临时变量，和 `tpd` 结构体毫无关系——写了 6 个假的 0 字节就当 dump 过了。用户反复指出"这和内存里给函数的 tpd 有什么关系？"，我理解后才改为真正的 `fwrite(&tpd, sizeof(tpd), 1, df)`。
+
+**正确做法**：
 - 完整 dump 所有结构体：`fwrite(&struct, sizeof(struct), 1, df)`
 - 不能用硬编码零值假装 dump
 - dump 调用前后各一次，不可只 dump 输出不 dump 输入
 - CLI 和 Cython 两端同步加 dump，同一位置、同一格式
 - `fopen/fwrite` 写入指定路径，Python `struct.unpack` 解析对比
 - 60+ 行 dump 代码虽冗长但比反复猜测高效得多
+- 解析 dump 时字段偏移算错会得出完全错误的结论（如 nipoint 偏移 64→80 的错误导致误判 CLi nipoint=0）
 
 ## 三、fitsimage vs image 结构体布局
 
