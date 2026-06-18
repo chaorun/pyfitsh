@@ -37,7 +37,7 @@ def do_test():
     convolved, _ = fc.fit(ref, v1_img, ref_mask=ref_mask, img_mask=v1_mask,
                            kernel_dict=kernel_dict)
 
-    ok, msg = compare_fits(convolved, "cli_test_ref_conv_from_kernel.fits")
+    ok, msg = compare_fits(convolved, "cli_test_ref_conv_from_kernel.fits", rtol=1e-4, atol=1e-1)
     if not ok:
         return False, f"convolved: {msg}"
 

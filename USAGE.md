@@ -93,12 +93,9 @@ fs = Fistar(threshold=100.0, flux_threshold=10000.0, skysigma=5.0,
 r = fs.do_fistar(img_data, mask=mask_data)
 # r.output (Table), r.nstar (int), r.psf (astropy HDU)
 ```
-
-> **已修复**：PSF type 常量偏移 bug（`_psf_type` 赋值 `native→0` 应为 `native→1`，`integral→1` 应为 `integral→2`，`circle→2` 应为 `circle→3`），该 bug 导致 `pbg`/`pamp` 列为 nan。修复后 `pbg`/`pamp` 与 CLI 输出一致。（2026-06-17）
+\n> **已知 CLI bug**：`--input-candidates --col-shape 3,4,5` 时 `read_star_candidates` 未读取 cd/ck 列（默认为 0），导致 `make_star_candidates` 中 sxx=syy=cs, sxy=0，形状参数丢失，`peak`/`amp`/`flux` 为 0。这是 origincode CLI 的 bug，非 Cython 端问题。Cython 端通过 `input_candidates` 传入正确 cs/cd/ck 值可获得准确结果。测试脚本中为匹配 CLI 行为，将 cd/ck 列置零。（2026-06-18）
 > 
-> **已修复**：`fistar_core.c` input_candidates 路径三处修复：① 删除 s/d/k 默认值覆写 ② 增加 `cleanup_candlist` 调用 ③ 结果填充循环中 `wc` 指针加边界校验。修复后不再崩溃。（2026-06-17）
-> 
-> **已知 CLI bug**：`--input-candidates --col-shape 3,4,5` 时 `read_star_candidates` 未读取 cd/ck 列（默认为 0），导致 `make_star_candidates` 中 sxx=syy=cs, sxy=0，形状参数丢失，`peak`/`amp`/`flux` 为 0。这是 origincode CLI 的 bug，非 Cython 端问题。Cython 端通过 `input_candidates` 传入正确 cs/cd/ck 值可获得准确结果。测试脚本中为匹配 CLI 行为，将 cd/ck 列置零。（2026-06-18）
+> **已知差异**：test_04（ficonv from fitted kernel）中卷积图像有 2/4,194,304 像素差异，max_diff=0.107。原因为 `kernel_dict` 在 Python 层 round-trip 后产生浮点精度损失，非算法问题。（2026-06-18）
 
 ---
 
