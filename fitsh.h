@@ -71,6 +71,16 @@ char	*get_progname(char *argv0);
    Print generic version information to the stream 'fw'. */
 int	fprint_generic_version(FILE *fw,char *arg0,char *name,char *pv,int type);
 
+#ifndef __LONGHELP_ENTRY_IN_FITSH
+#define __LONGHELP_ENTRY_IN_FITSH
+typedef struct
+ {	char	*options;
+	char	*description;
+ } longhelp_entry;
+#define LONGHELP_OPTIONS  { "Options:", NULL }
+#endif
+
+int	fprint_generic_long_help(FILE *fw,int is_wiki,longhelp_entry *help,char *synopsis,char *description);
 
 int logmsg(int flag, char *msg, ...);
 
