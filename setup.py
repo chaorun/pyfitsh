@@ -28,6 +28,8 @@ ELLIPTIC = os.path.join(MATH, "elliptic")
 FIPHOT = os.path.join(HERE, "fiphot")
 FICONV = os.path.join(HERE, "ficonv")
 FISTAR = os.path.join(HERE, "fistar")
+FICALIB = os.path.join(HERE, "ficalib")
+FIIGN   = os.path.join(HERE, "fiign")
 FITRANS = os.path.join(HERE, "fitrans")
 GRMATCH = os.path.join(HERE, "grmatch")
 GRTRANS = os.path.join(HERE, "grtrans")
@@ -124,8 +126,12 @@ sources = [
 ext = Extension(
     name="pyfitsh.core",
     sources=[os.path.join(HERE, "core.pyx")]
-          + [os.path.join(HERE, s) for s in sources],
-    include_dirs=[os.path.join(HERE,"algorithms"), HERE, MATH, FIT, SPL, IO_DIR, LINK, INDEX, EXPINT, INTERSEC, ELLIPTIC, FIPHOT, FICONV, FISTAR, FITRANS, GRMATCH, GRTRANS, FIRANDOM, FIARITH, PSN_DIR, DFT_DIR],
+          + [os.path.join(HERE, s) for s in sources]
+           + [os.path.join(HERE, "ficalib", "ficalib_core.c"),
+              os.path.join(HERE, "ficalib", "combine.c"),
+              os.path.join(HERE, "math", "splinefit.c"),
+              os.path.join(HERE, "fiign", "fiign_core.c")],
+    include_dirs=[os.path.join(HERE,"algorithms"), HERE, MATH, FIT, SPL, IO_DIR, LINK, INDEX, EXPINT, INTERSEC, ELLIPTIC, FIPHOT, FICONV, FISTAR, FITRANS, GRMATCH, GRTRANS, FIRANDOM, FIARITH, PSN_DIR, DFT_DIR, FICALIB, FIIGN],
     extra_compile_args=["-O3"],
     language="c",
 )

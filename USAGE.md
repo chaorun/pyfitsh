@@ -426,9 +426,85 @@ fir.draw_stars(img, stars)
 
 ---
 
+## Ficalib — 图像校准（bias/flat/dark）
+
+```python
+from pyfitsh import Ficalib
+import numpy as np
+from astropy.io import fits
+
+fc = Ficalib()
+r = fc.calibrate(sci, bias=bias_data, flat=flat_data,
+                 dark=dark_data, flat_mean=1.0, dark_time=0.0)
+calibrated = r['data']
+```
+
+| Python 参数 | CLI 参数 | 说明 |
+|-------------|----------|------|
+| `img_data` | `-i` | 科学图像 float64 2D |
+| `mask` | — | 可选 mask uint8 2D |
+| `bias` | `-B` | bias 帧 float64 2D |
+| `dark` | `-D` | dark 帧 float64 2D |
+| `flat` | `-F` | flat 帧 float64 2D |
+| `flat_mean` | `--flat-mean` | flat 归一化因子 (default 1.0) |
+| `dark_time` | `--dark-time` | dark 曝光时间比例 (0 = 使用 1.0) |
+
+**返回**：`{'data': ndarray float64, 'mask': ndarray uint8}`
+
+---
+
+## Fiign — 像素 mask 操作
+
+```python
+from pyfitsh import Fiign
+import numpy as np
+
+fg = Fiign()
+r = fg.apply(img, mask=mask,
+             ignore_nonpos=True, saturation=50000,
+             ignore_cosmics=True, replace_cosmics=True,
+             th_low=5.0, th_high=10.0,
+             apply_mask=True, mask_value=-999)
+# r['data'], r['mask'], r['history']
+```
+
+| Python 参数 | CLI 参数 | 说明 |
+|-------------|----------|------|
+| `img` | `-i` | 输入图像 float64 2D |
+| `mask` | `-M` | 可选输入 mask uint8 2D（多个外部 mask 需 Python 层 `\|=` 预合并） |
+| `saturation` | `-s` | 饱和阈值 (>0 启用) |
+| `saturation_img` | `-S` | 逐像素饱和阈值 float64 2D |
+| `leak_method` | `--lu`/`--lr`/`--an` | blooming 方向：0=none, 1=垂直, 2=水平, 3=任意 |
+| `ignore_nonpos` | `-n` | 标记非正像素 (≤0) 为 MASK_FAULT |
+| `ignore_neg` | `-g` | 标记负像素为 MASK_FAULT |
+| `ignore_zero` | `-z` | 标记零值为 MASK_FAULT |
+| `ignore_cosmics` | `-c` | 启用宇宙线检测 |
+| `replace_cosmics` | `-r` | 用局部均值替换宇宙线像素 |
+| `th_low` | `--threshold-low` | 宇宙线低阈值 (default 10.0) |
+| `th_high` | `--threshold-high` | 宇宙线高阈值 (default 50.0) |
+| `sky_sigma` | `-d` | 天空背景噪声 (>0 时限制 sig≤2×skysigma) |
+| `expand_hsize` | `-x` | mask 膨胀半径 (default 0) |
+| `apply_mask` | `-a` | 将被 mask 像素替换为 `mask_value` |
+| `mask_value` | `-m` | 被 mask 像素的替换值 (default 0.0) |
+| `bitpix` | `-b` | 整数 bitpix (8/16/32)，负数=浮点 (default -32) |
+| `convert_list` | `--convert` | mask 转换规格列表，如 `['fault:any:none:cosmic']` |
+| `mask_block_list` | `-q` | 几何形状列表，如 `['block:hot:100,100:300,300', 'circle:cosmic:500,500:50']` |
+
+**mask block 格式**：
+- `block:<mask>:<x1>,<y1>:<x2>,<y2>` — 矩形
+- `circle:<mask>:<xc>,<yc>:<radius>` — 圆形
+- `pixel:<mask>:<x>,<y>` — 单像素
+- `line:<mask>:<x1>,<y1>:<x2>,<y2>[:<width>]` — 线段
+
+**mask 名称**：`none`, `clear`, `fault`, `hot`, `cosmic`, `outer`, `oversaturated`, `leaked`, `bloomed`, `saturated`, `interpolated`, `all`, `bad`
+
+**返回**：`{'data': ndarray float64, 'mask': ndarray uint8, 'history': str}`
+
+---
+
 ## 通用注意事项
 
-- 所有模块返回 `types.SimpleNamespace`，用 `r.output` 访问主结果
+- Fiign/Ficalib 返回普通 `dict`，其余模块返回 `types.SimpleNamespace`
 - 图像数据均为 float64 numpy 数组，C-order (row-major)
 - mask 为 uint8 numpy 数组，0 = 有效像素
 - `decode_maskinfo(hdu)` 读取 FITS 头中 MASKINFO 关键字生成 mask

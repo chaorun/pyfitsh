@@ -2468,3 +2468,241 @@ class Fiphot:
         output_ns.output = Table({'mag': np.asarray(out_mag_v).reshape(nstar, nap).ravel()})
         return output_ns
 
+
+cdef extern from "ficalib/ficalib_core.h":
+    ctypedef struct ficalib_flatpoly:
+        double *coeff
+        int order
+        double resd
+        double vmin
+    int ficalib_calibrate_cy(
+        double *img_data, unsigned char *mask_data, int sx, int sy,
+        double *bias_data, unsigned char *bias_mask, int bias_sx, int bias_sy,
+        double *dark_data, unsigned char *dark_mask, int dark_sx, int dark_sy,
+        double *flat_data, unsigned char *flat_mask, int flat_sx, int flat_sy,
+        double flat_mean, double dark_time,
+        double **out_data, unsigned char **out_mask, int *out_sx, int *out_sy,
+        ficalib_flatpoly *out_flat) nogil
+
+
+class Ficalib:
+    """Image calibration (ficalib)."""
+
+    def calibrate(self, img_data, mask=None,
+                  bias=None, bias_mask=None,
+                  dark=None, dark_mask=None,
+                  flat=None, flat_mask=None,
+                  flat_mean=1.0, dark_time=0.0):
+        import numpy as np
+        cdef double [:,::1] img_view = np.ascontiguousarray(img_data, dtype=np.float64)
+        cdef int sx = img_view.shape[1], sy = img_view.shape[0]
+        cdef unsigned char [:,::1] mk_view
+        if mask is not None:
+            mk_view = np.ascontiguousarray(mask, dtype=np.uint8)
+        else:
+            mk_view = np.zeros((sy, sx), dtype=np.uint8)
+
+        cdef double *bias_ptr = NULL
+        cdef double *dark_ptr = NULL
+        cdef double *flat_ptr = NULL
+        cdef int bsx = 0, bsy = 0, dsx = 0, dsy = 0, fsx = 0, fsy = 0
+
+        cdef double [::1] bias_flat
+        cdef double [::1] dark_flat
+        cdef double [::1] flat_flat
+        if bias is not None:
+            bias_arr = np.ascontiguousarray(bias, dtype=np.float64)
+            bsy, bsx = bias_arr.shape
+            bias_flat = bias_arr.ravel()
+            bias_ptr = &bias_flat[0]
+        if dark is not None:
+            dark_arr = np.ascontiguousarray(dark, dtype=np.float64)
+            dsy, dsx = dark_arr.shape
+            dark_flat = dark_arr.ravel()
+            dark_ptr = &dark_flat[0]
+        if flat is not None:
+            flat_arr = np.ascontiguousarray(flat, dtype=np.float64)
+            fsy, fsx = flat_arr.shape
+            flat_flat = flat_arr.ravel()
+            flat_ptr = &flat_flat[0]
+
+        cdef double *out_data_ptr = NULL
+        cdef unsigned char *out_mask_ptr = NULL
+        cdef int out_sx = 0, out_sy = 0
+
+        cdef int r = ficalib_calibrate_cy(
+            &img_view[0,0], &mk_view[0,0], sx, sy,
+            bias_ptr, NULL, bsx, bsy,
+            dark_ptr, NULL, dsx, dsy,
+            flat_ptr, NULL, fsx, fsy,
+            flat_mean, dark_time,
+            &out_data_ptr, &out_mask_ptr,
+            &out_sx, &out_sy,
+            NULL)
+
+        if r != 0:
+            raise RuntimeError(f"ficalib_calibrate_cy failed with code {r}")
+
+        out_data = np.asarray(<double[:out_sx * out_sy]>out_data_ptr).reshape(out_sy, out_sx).copy()
+        out_mask = np.asarray(<unsigned char[:out_sx * out_sy]>out_mask_ptr).reshape(out_sy, out_sx).copy()
+        free(out_data_ptr)
+        free(out_mask_ptr)
+
+        return {'data': out_data, 'mask': out_mask, 'sx': out_sx, 'sy': out_sy}
+
+
+cdef extern from "fiign/fiign_core.h":
+    ctypedef struct fiign_result:
+        double **data
+        char **mask
+        int sx, sy
+        char *history
+    fiign_result *fiign_apply(
+        double **img, char **mask, int sx, int sy,
+        double saturation, double *sat_img,
+        int leak_method,
+        int ignore_nonpos, int ignore_neg, int ignore_zero,
+        int ignore_cosmics, int replace_cosmics,
+        double th_low, double th_high, double sky_sigma,
+        int expand_hsize,
+        int apply_mask, double mask_value,
+        int bitpix,
+        char **convert_list,
+        char **mask_block_list) nogil
+    void fiign_result_free(fiign_result *r)
+
+
+class Fiign:
+    """Pixel mask operations (fiign)."""
+
+    def apply(self, img, mask=None,
+              saturation=0.0, saturation_img=None, leak_method=0,
+              ignore_nonpos=False, ignore_neg=False, ignore_zero=False,
+              ignore_cosmics=False, replace_cosmics=False,
+              th_low=10.0, th_high=50.0, sky_sigma=0.0,
+              expand_hsize=0,
+              apply_mask=False, mask_value=0.0,
+              bitpix=-32,
+              convert_list=None,
+              mask_block_list=None):
+        """Apply mask operations on image data.
+
+        Parameters
+        ----------
+        img : ndarray 2D float64
+        mask : ndarray 2D uint8 (optional)
+        saturation : float — saturation level
+        saturation_img : ndarray 2D float64 — per-pixel saturation
+        leak_method : int — 0=none, 1=vertical, 2=horizontal, 3=both
+        ignore_nonpos : bool
+        ignore_neg : bool
+        ignore_zero : bool
+        ignore_cosmics : bool
+        replace_cosmics : bool — replace cosmic pixels with local mean
+        th_low : float — low threshold for cosmics
+        th_high : float — high threshold for cosmics
+        sky_sigma : float — sky sigma for cosmics
+        expand_hsize : int — mask expand half-size
+        apply_mask : bool — set masked pixels to mask_value
+        mask_value : float
+        bitpix : int — integer bitpix (8/16/32), negative = real data
+        convert_list : list of str — mask convert specs
+        mask_block_list : list of str — mask block specs
+
+        Returns
+        -------
+        dict with keys: 'data' (float64), 'mask' (uint8), 'history' (str)
+        """
+        import numpy as np
+        cdef double [:,::1] img_view = np.ascontiguousarray(img, dtype=np.float64)
+        cdef int sx = img_view.shape[1], sy = img_view.shape[0]
+        cdef unsigned char [:,::1] mk_view
+        if mask is not None:
+            mk_view = np.ascontiguousarray(mask, dtype=np.uint8)
+        else:
+            mk_view = np.zeros((sy, sx), dtype=np.uint8)
+
+        cdef int i
+        cdef double **img_rows = <double **>malloc(sizeof(double *) * sy)
+        cdef char **mk_rows = <char **>malloc(sizeof(char *) * sy)
+        if img_rows == NULL or mk_rows == NULL:
+            raise MemoryError("failed to allocate row pointers")
+        for i in range(sy):
+            img_rows[i] = &img_view[i, 0]
+            mk_rows[i] = <char *>&mk_view[i, 0]
+
+        cdef double *sat_ptr = NULL
+        cdef double [::1] sat_flat
+        if saturation_img is not None:
+            sat_arr = np.ascontiguousarray(saturation_img, dtype=np.float64)
+            sat_flat = sat_arr.ravel()
+            sat_ptr = &sat_flat[0]
+
+        cdef char **clist = NULL
+        cdef bytes cl_bytes
+        cdef list cl_bytes_list = []
+        if convert_list is not None:
+            clist = <char **>malloc(sizeof(char *) * (len(convert_list) + 1))
+            for i in range(len(convert_list)):
+                cl_bytes = convert_list[i].encode('utf-8')
+                cl_bytes_list.append(cl_bytes)
+                clist[i] = cl_bytes
+            clist[len(convert_list)] = NULL
+
+        cdef char **mblist = NULL
+        cdef bytes mb_bytes
+        cdef list mb_bytes_list = []
+        if mask_block_list is not None:
+            mblist = <char **>malloc(sizeof(char *) * (len(mask_block_list) + 1))
+            for i in range(len(mask_block_list)):
+                mb_bytes = mask_block_list[i].encode('utf-8')
+                mb_bytes_list.append(mb_bytes)
+                mblist[i] = mb_bytes
+            mblist[len(mask_block_list)] = NULL
+
+        cdef int ign_np = 1 if ignore_nonpos else 0
+        cdef int ign_ng = 1 if ignore_neg else 0
+        cdef int ign_zr = 1 if ignore_zero else 0
+        cdef int ign_cs = 1 if ignore_cosmics else 0
+        cdef int rep_cs = 1 if replace_cosmics else 0
+        cdef int app_msk = 1 if apply_mask else 0
+
+        cdef fiign_result *r = fiign_apply(
+            img_rows, mk_rows, sx, sy,
+            saturation, sat_ptr, leak_method,
+            ign_np, ign_ng, ign_zr,
+            ign_cs, rep_cs,
+            th_low, th_high, sky_sigma,
+            expand_hsize,
+            app_msk, mask_value,
+            bitpix,
+            clist, mblist)
+
+        free(img_rows)
+        free(mk_rows)
+        if clist != NULL:
+            free(clist)
+        if mblist != NULL:
+            free(mblist)
+
+        if r == NULL:
+            raise RuntimeError("fiign_apply failed")
+
+        out_data = np.empty((sy, sx), dtype=np.float64)
+        out_mask = np.empty((sy, sx), dtype=np.uint8)
+        cdef double [:,::1] out_data_view = out_data
+        cdef unsigned char [:,::1] out_mask_view = out_mask
+        cdef double *drow
+        cdef char *mrow
+        cdef int j
+        for i in range(sy):
+            drow = r.data[i]
+            mrow = r.mask[i]
+            for j in range(sx):
+                out_data_view[i, j] = drow[j]
+                out_mask_view[i, j] = <unsigned char>mrow[j]
+
+        history = r.history.decode('utf-8') if r.history != NULL else ""
+        fiign_result_free(r)
+
+        return {'data': out_data, 'mask': out_mask, 'history': history}
