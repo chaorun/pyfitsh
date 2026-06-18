@@ -30,6 +30,7 @@ FICONV = os.path.join(HERE, "ficonv")
 FISTAR = os.path.join(HERE, "fistar")
 FICALIB = os.path.join(HERE, "ficalib")
 FIIGN   = os.path.join(HERE, "fiign")
+FICOMBINE = os.path.join(HERE, "ficombine")
 FITRANS = os.path.join(HERE, "fitrans")
 GRMATCH = os.path.join(HERE, "grmatch")
 GRTRANS = os.path.join(HERE, "grtrans")
@@ -130,8 +131,9 @@ ext = Extension(
            + [os.path.join(HERE, "ficalib", "ficalib_core.c"),
               os.path.join(HERE, "algorithms", "combine.c"),
               os.path.join(HERE, "math", "splinefit.c"),
-              os.path.join(HERE, "fiign", "fiign_core.c")],
-    include_dirs=[os.path.join(HERE,"algorithms"), HERE, MATH, FIT, SPL, IO_DIR, LINK, INDEX, EXPINT, INTERSEC, ELLIPTIC, FIPHOT, FICONV, FISTAR, FITRANS, GRMATCH, GRTRANS, FIRANDOM, FIARITH, PSN_DIR, DFT_DIR, FICALIB, FIIGN],
+              os.path.join(HERE, "fiign", "fiign_core.c"),
+              os.path.join(HERE, "ficombine", "ficombine_core.c")],
+    include_dirs=[os.path.join(HERE,"algorithms"), HERE, MATH, FIT, SPL, IO_DIR, LINK, INDEX, EXPINT, INTERSEC, ELLIPTIC, FIPHOT, FICONV, FISTAR, FITRANS, GRMATCH, GRTRANS, FIRANDOM, FIARITH, PSN_DIR, DFT_DIR, FICALIB, FIIGN, FICOMBINE],
     extra_compile_args=["-O3"],
     language="c",
 )

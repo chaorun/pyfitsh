@@ -2706,3 +2706,112 @@ class Fiign:
         fiign_result_free(r)
 
         return {'data': out_data, 'mask': out_mask, 'history': history}
+
+
+cdef extern from "ficombine/ficombine_core.h":
+    ctypedef struct combine_parameters:
+        int mode
+        int niter
+        double lower, upper
+        int lowest, highest
+        int ignore_flag
+        int logicalmethod
+    ctypedef struct ficombine_result:
+        double **data
+        char **mask
+        int sx, sy
+        char *history
+    int combine_parse_mode_simple(char *modstr, combine_parameters *cp)
+    ficombine_result *ficombine_apply(
+        double **images, char **masks,
+        int nimg, int sx, int sy,
+        combine_parameters *cp,
+        int apply_mask) nogil
+    void ficombine_result_free(ficombine_result *r)
+
+
+class Ficombine:
+    """Image combination (ficombine)."""
+
+    def combine(self, images, masks=None,
+                mode='mean',
+                ignore_neg=False,
+                logical_and=False,
+                apply_mask=False):
+        """Combine multiple images into one.
+
+        Parameters
+        ----------
+        images : ndarray 3D (nimg, sy, sx) float64
+        masks : ndarray 3D (nimg, sy, sx) uint8 (optional)
+        mode : str — combination mode (see CLI -m)
+        ignore_neg : bool — ignore negative pixels
+        logical_and : bool — use logical AND instead of OR
+        apply_mask : bool — set masked output pixels to zero
+
+        Returns
+        -------
+        dict with keys: 'data' (float64), 'mask' (uint8), 'history' (str)
+        """
+        import numpy as np
+        cdef int nimg = images.shape[0]
+        cdef int sy = images.shape[1]
+        cdef int sx = images.shape[2]
+
+        cdef double[:,:,::1] imgs_view = np.ascontiguousarray(images, dtype=np.float64)
+
+        cdef unsigned char[:,:,::1] mks_view
+        if masks is not None:
+            mks_view = np.ascontiguousarray(masks, dtype=np.uint8)
+
+        cdef double **img_ptrs = <double **>malloc(sizeof(double *) * nimg)
+        cdef char **mk_ptrs
+        if masks is not None:
+            mk_ptrs = <char **>malloc(sizeof(char *) * nimg)
+        else:
+            mk_ptrs = NULL
+
+        cdef int j
+        for j in range(nimg):
+            img_ptrs[j] = &imgs_view[j, 0, 0]
+            if mk_ptrs != NULL:
+                mk_ptrs[j] = <char *>&mks_view[j, 0, 0]
+
+        cdef combine_parameters cp
+        cdef bytes mode_bytes = mode.encode('utf-8')
+        cdef char *mode_str = mode_bytes
+        combine_parse_mode_simple(mode_str, &cp)
+
+        if ignore_neg:
+            cp.ignore_flag |= 0x01  # COM_IGNORE_NEGATIVE
+        if logical_and:
+            cp.logicalmethod = 1
+
+        cdef ficombine_result *r = ficombine_apply(
+            img_ptrs, mk_ptrs, nimg, sx, sy, &cp, 1 if apply_mask else 0)
+
+        free(img_ptrs)
+        if mk_ptrs != NULL:
+            free(mk_ptrs)
+
+        if r == NULL:
+            raise RuntimeError("ficombine_apply failed")
+
+        out_data = np.empty((sy, sx), dtype=np.float64)
+        out_mask = np.empty((sy, sx), dtype=np.uint8)
+        cdef double [:,::1] out_data_view = out_data
+        cdef unsigned char [:,::1] out_mask_view = out_mask
+        cdef double *drow
+        cdef char *mrow
+        cdef int i, k
+        for i in range(sy):
+            drow = r.data[i]
+            mrow = r.mask[i]
+            for k in range(sx):
+                out_data_view[i, k] = drow[k]
+                out_mask_view[i, k] = <unsigned char>mrow[k]
+
+        history = r.history.decode('utf-8') if r.history != NULL else ""
+        ficombine_result_free(r)
+
+        return {'data': out_data, 'mask': out_mask, 'history': history}
