@@ -1666,6 +1666,21 @@ int fit_downhill_simplex(lfitdata *lf,lfit_result *result,variable *vars,int nva
 
 static int lfit_builtins_registered = 0;
 
+static void lfit_free_psn(void)
+{
+ if ( lpg.pl_sym )      { free(lpg.pl_sym);      }
+ if ( lpg.pl_prop )     { free(lpg.pl_prop);     }
+ if ( lpg.pl_funct )    { free(lpg.pl_funct);    }
+ if ( lpg.pl_diff )     { free(lpg.pl_diff);     }
+ if ( lpg.pl_symeval )  { free(lpg.pl_symeval);  }
+ if ( lpg.pl_macro )    { free(lpg.pl_macro);    }
+ if ( lpg.symbols )     { free(lpg.symbols);     }
+ if ( lpg.lffregs )     { free(lpg.lffregs);     }
+ memset(&lpg,0,sizeof(lfitpsnglobal));
+ lpg.pl_simp=psn_lfit_simp;
+ lfit_builtins_registered=0;
+}
+
 static int lfit_ensure_builtins(void)
 {
  int	i,r;
@@ -1743,6 +1758,9 @@ int lfit_python_apply(
  memset(lf,0,sizeof(lfitdata));
  memset(db,0,sizeof(datablock));
  memset(result,0,sizeof(lfit_result));
+
+ lfit_free_psn();
+ lfit_ensure_builtins();
 
  if ( error != NULL && weight != NULL )
   {	snprintf(result->error_msg,sizeof(result->error_msg),"both error and weight specified, use only one");
@@ -2052,6 +2070,7 @@ int lfit_python_apply(
  result->chain=chain;
  result->chain_max=chain_max;
  result->chain_count=0;
+ result->nvar_chain=nvar+1;
 
  result->params=(double *)calloc(nvar>0?nvar:1,sizeof(double));
  result->errors=(double *)calloc(nvar>0?nvar:1,sizeof(double));

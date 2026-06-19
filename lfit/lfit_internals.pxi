@@ -46,6 +46,8 @@ def lfit_fit(data,
     cdef int fit_method
     cdef lfit_result result
     cdef double *data_ptr
+    cdef int nvar_fit, stride, chain_capacity
+    cdef double *chain_buf
 
     if method in LFIT_METHODS:
         fit_method = LFIT_METHODS[method]
@@ -122,6 +124,15 @@ def lfit_fit(data,
             c_macros[i] = mb
         c_macros[nm] = NULL
 
+    nvar_fit = len(variables.split(','))
+    stride = nvar_fit + 1
+    chain_capacity = 0
+    chain_buf = NULL
+    if fit_method in (FIT_METHOD_MCMC, FIT_METHOD_XMMC, FIT_METHOD_EMCE,
+                      FIT_METHOD_FIMA, FIT_METHOD_MCHI):
+        chain_capacity = mc_iterations + 2
+        chain_buf = <double *>malloc(chain_capacity * stride * sizeof(double))
+
     memset(&result, 0, sizeof(lfit_result))
 
     with nogil:
@@ -138,7 +149,7 @@ def lfit_fit(data,
             errdump, c_fmt, c_cfmt, c_dvr,
             is_dump_delta, resdump, force_nonlinear, c_co,
             &result,
-            NULL, 0,
+            chain_buf, chain_capacity,
             NULL, NULL)
 
     if c_macros != NULL:
@@ -173,10 +184,13 @@ def lfit_fit(data,
     else:
         out['used_mask'] = []
 
-    if result.chain != NULL and result.chain_count > 0 and result.nvar_chain > 0:
-        chain_list = [result.chain[i] for i in range(result.chain_count * result.nvar_chain)]
-        out['chain'] = np.array(chain_list).reshape(result.chain_count, result.nvar_chain)
+    if chain_buf != NULL and result.chain_count > 0:
+        chain_list = [chain_buf[i] for i in range(result.chain_count * stride)]
+        out['chain'] = np.array(chain_list).reshape(result.chain_count, stride)
     else:
         out['chain'] = None
+
+    if chain_buf != NULL:
+        free(chain_buf)
 
     return out
