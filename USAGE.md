@@ -846,17 +846,21 @@ print(r.params, r.errors)
 | 属性/key | 类型 | 说明 |
 |----------|------|------|
 | `params` | ndarray | 拟合参数值 |
-| `errors` | ndarray | 参数不确定度 |
+| `errors` | ndarray | 参数不确定度 (Fisher/EMCE) |
 | `chi2` | float | 拟合残差 chi2 |
 | `nrow` | int | 总数据行数 |
 | `nused` | int | 实际使用行数 (rejected 后) |
 | `nrejected` | int | 被拒绝行数 (= nrow - nused) |
 | `residual_sigma` | float | 残差标准差 |
+| `acceptance` | float | MCMC/XMMC 接受率 |
 | `ok` | bool | 拟合是否成功 |
 | `param_dict` | dict | {变量名: 值} |
 | `variables` | list | 变量名列表 |
 | `used_mask` | list | 每行是否被使用 |
-| `chain` | ndarray/None | MC 链 (nstep x nvar) |
+| `chain` | ndarray/None | 采样链 (chain_count, nvar+1)，最后一列为 chi2。MCMC/XMMC/EMCE/FIMA/MCHI 自动返回 |
+| `cov_matrix` | ndarray/None | 协方差矩阵 (nvar, nvar)。FIMA/XMMC 自动返回 |
+| `corr_matrix` | ndarray/None | 相关矩阵 (nvar, nvar)。从 cov_matrix 计算 |
+| `eval_data` | ndarray/None | eval 模式输出 (nrow, ncol)。dependent=None 时自动返回 |
 | `error_code` | int | 错误码 (0=成功) |
 | `error_msg` | str | 错误信息 |
 
@@ -864,13 +868,13 @@ print(r.params, r.errors)
 
 ### 测试覆盖
 
-对标 origincode 3 个测试脚本，全部 47/47 PASS：
+对标 origincode 3 个测试脚本：
 
-| 脚本 | 测试数 | 结果 |
-|------|--------|------|
-| test_lfit.sh | 19 | 19/19 PASS |
-| test_lfit_montecarlo.sh | 19 | 19/19 PASS |
-| longtest_lfit.sh | 9 | 9/9 PASS |
+| 脚本 | 测试数 | 对比方式 | 结果 |
+|------|--------|---------|------|
+| test_lfit.sh | 19 | params 逐值对比 | 18/19 PASS, 1 SKIP (多表达式 eval) |
+| test_lfit_montecarlo.sh | 19 | chain 逐行对比 + FIMA params/errors/corr | 19/19 PASS |
+| longtest_lfit.sh | 9 | chain 逐行对比 + FIMA | 7/9 PASS, 2 DIFF (CLI 精度截断) |
 
 ### 性能 (-O3 编译)
 
