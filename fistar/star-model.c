@@ -20,7 +20,7 @@
 #include "math/fit/lmfit.h"
 #include "math/poly.h"
 #include "math/expint/expint.h"
-#include "index/multiindex.h"
+#include "multiindex.h"
 
 #include "fitsh.h"
 #include "common.h"

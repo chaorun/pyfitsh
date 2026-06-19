@@ -3,8 +3,8 @@ import os
 import numpy as np
 import setuptools._distutils.sysconfig as distutilsc
 # Force exact same compile/link flags as working dylib build
-distutilsc.get_config_vars()['CFLAGS'] = '-O0 -g -fPIC'
-distutilsc.get_config_vars()['OPT'] = '-O0 -g'
+distutilsc.get_config_vars()['CFLAGS'] = '-O3 -fPIC'
+distutilsc.get_config_vars()['OPT'] = '-O3'
 distutilsc.get_config_vars()['BASECFLAGS'] = ''
 distutilsc.get_config_vars()['CC'] = 'gcc'
 distutilsc.get_config_vars()['LDSHARED'] = 'gcc -shared -undefined dynamic_lookup'
@@ -20,8 +20,8 @@ MATH = os.path.join(HERE, "math")
 FIT  = os.path.join(MATH, "fit")
 SPL  = os.path.join(MATH, "spline")
 IO_DIR = os.path.join(HERE, "io")
-LINK = os.path.join(HERE, "link")
-INDEX = os.path.join(HERE, "index")
+# LINK = os.path.join(HERE, "link")   # merged into algorithms/
+# INDEX = os.path.join(HERE, "index")  # merged into algorithms/
 EXPINT = os.path.join(MATH, "expint")
 INTERSEC = os.path.join(MATH, "intersec")
 ELLIPTIC = os.path.join(MATH, "elliptic")
@@ -33,11 +33,12 @@ LFIT    = os.path.join(HERE, "lfit")
 FIIGN   = os.path.join(HERE, "fiign")
 FICOMBINE = os.path.join(HERE, "ficombine")
 FITRANS = os.path.join(HERE, "fitrans")
+ORIGINC  = "/Users/chaorun/Code/Githubs/fitsh-0.9.4/origincode"
 GRMATCH = os.path.join(HERE, "grmatch")
 GRTRANS = os.path.join(HERE, "grtrans")
 FIRANDOM = os.path.join(HERE, "firandom")
 FIARITH  = os.path.join(HERE, "fiarith")
-PSN_DIR  = os.path.join(HERE, "psn")
+PSN_DIR  = os.path.join(HERE, "algorithms", "psn")
 DFT_DIR  = os.path.join(MATH, "dft")
 # 所有 C 源码文件 (核心 + 数学库 + 样条 + 投影 + 图像变换 + kernel + 星检测)
 sources = [
@@ -79,9 +80,9 @@ sources = [
     "fiphot/weight-gen.c",
     "fiphot/weight-star.c",
     # link algorithm deps (all needed at link time)
-    "link/floodfill.c",
-    "link/linkblock.c",
-    "link/linkpoint.c",
+    "algorithms/floodfill.c",
+    "algorithms/linkblock.c",
+    "algorithms/linkpoint.c",
     # math extras
     "math/expint/expint.c",
     "math/intersec/intersec.c",
@@ -89,8 +90,8 @@ sources = [
     "math/elliptic/elliptic.c",
     "math/elliptic/ntiq.c",
     "math/fit/downhill.c",
-    "index/sort.c",
-    "index/multiindex.c",
+    "algorithms/sort.c",
+    "algorithms/multiindex.c",
     # existing math
     "math/tpoint.c",
     "math/cpmatch.c",
@@ -115,9 +116,9 @@ sources = [
     "firandom/firandom-eval.c",
     "firandom/random.c",
     # PSN expression parser
-    "psn/psn.c",
-    "psn/psn-general.c",
-    "psn/psn-general-ds.c",
+    "algorithms/psn/psn.c",
+    "algorithms/psn/psn-general.c",
+    "algorithms/psn/psn-general-ds.c",
     # fiarith expression evaluator
     "fiarith/evaluate.c",
     "fiarith/limitpix.c",
@@ -134,12 +135,11 @@ ext = Extension(
               os.path.join(HERE, "math", "splinefit.c"),
               os.path.join(HERE, "fiign", "fiign_core.c"),
               os.path.join(HERE, "ficombine", "ficombine_core.c"),
-              os.path.join(HERE, "lfit", "lfit.c"),
-              os.path.join(HERE, "lfit", "lfit-builtin.c"),
-              os.path.join(HERE, "lfit", "lfit-info.c"),
-              os.path.join(HERE, "lfit", "lfit-stubs.c")],
-    include_dirs=[os.path.join(HERE,"algorithms"), HERE, MATH, FIT, SPL, IO_DIR, LINK, INDEX, EXPINT, INTERSEC, ELLIPTIC, FIPHOT, FICONV, FISTAR, FITRANS, GRMATCH, GRTRANS, FIRANDOM, FIARITH, PSN_DIR, DFT_DIR, FICALIB, LFIT, FIIGN, FICOMBINE],
-    extra_compile_args=["-O0", "-D_FITSH_SOURCE"],
+              os.path.join(HERE, "lfit", "lfit_interface.c"),
+              os.path.join(HERE, "lfit", "lfit-builtin.c")],
+    include_dirs=[LFIT, os.path.join(HERE,"algorithms"), HERE, MATH, FIT, SPL, IO_DIR, EXPINT, INTERSEC, ELLIPTIC, FIPHOT, FICONV, FISTAR, FITRANS, GRMATCH, GRTRANS, FIRANDOM, FIARITH, PSN_DIR, DFT_DIR, FICALIB, FIIGN, FICOMBINE],
+    extra_compile_args=["-O3", "-D_FITSH_SOURCE"],
+    extra_link_args=["-ldl"],
     language="c",
 )
 
@@ -149,7 +149,7 @@ fiarith_ext = Extension(
     sources=[os.path.join(HERE, "fiarith/fiarith_core.pyx")]
           + [os.path.join(HERE, s) for s in sources],
     include_dirs=[np.get_include(),
-                  os.path.join(HERE,"algorithms"), HERE, MATH, FIT, SPL, IO_DIR, LINK, INDEX, EXPINT, INTERSEC, ELLIPTIC, FIPHOT, FICONV, FISTAR, FITRANS, GRMATCH, GRTRANS, FIRANDOM, FIARITH, PSN_DIR, DFT_DIR],
+                  os.path.join(HERE,"algorithms"), HERE, MATH, FIT, SPL, IO_DIR, EXPINT, INTERSEC, ELLIPTIC, FIPHOT, FICONV, FISTAR, FITRANS, GRMATCH, GRTRANS, FIRANDOM, FIARITH, PSN_DIR, DFT_DIR],
     extra_compile_args=["-O3"],
     language="c",
 )

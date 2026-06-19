@@ -163,27 +163,27 @@ version 3 or later. See LICENSE for details.
       md5: c06b01975048676f0a2d2b47bce5c9d9
       status: identical to FITSH 0.9.4
 
-    link/linkblock.c
+    algorithms/linkblock.c
       upstream path: src/link/linkblock.c
       md5: acd091ab1ccb5d77a88ab3315e98d042
       status: identical to FITSH 0.9.4
 
-    link/linkpoint.c
+    algorithms/linkpoint.c
       upstream path: src/link/linkpoint.c
       md5: b2bd7d8daeac7665ec0f9fb057939b43
       status: identical to FITSH 0.9.4
 
-    link/floodfill.c
+    algorithms/floodfill.c
       upstream path: src/link/floodfill.c
       md5: 12e61eed25f076721c54bb9aa9fd0dcd
       status: identical to FITSH 0.9.4
 
-    index/multiindex.c
+    algorithms/multiindex.c
       upstream path: src/index/multiindex.c
       md5: d9cbab62644381b860b7c6744cc19d4f
       status: identical to FITSH 0.9.4
 
-    index/sort.c
+    algorithms/sort.c
       upstream path: src/index/sort.c
       md5: 9deab77332ab50ed79baf89fdf95b77c
       status: identical to FITSH 0.9.4
@@ -358,17 +358,17 @@ version 3 or later. See LICENSE for details.
       md5: 5761e8ed0e98cdb347ad1983d93174c9
       status: identical to FITSH 0.9.4
 
-    link/floodfill.h
+    algorithms/floodfill.h
       upstream path: src/link/floodfill.h
       md5: b47e4dc9a3a2bdba39d5d16ee2a7f554
       status: identical to FITSH 0.9.4
 
-    link/linkpoint.h
+    algorithms/linkpoint.h
       upstream path: src/link/linkpoint.h
       md5: 4b2c45253679e3861cd073897d00c5a4
       status: identical to FITSH 0.9.4
 
-    link/linkblock.h
+    algorithms/linkblock.h
       upstream path: src/link/linkblock.h
       md5: e61a1b67d0b196205cdbed7c16cf2425
       status: identical to FITSH 0.9.4
@@ -378,12 +378,12 @@ version 3 or later. See LICENSE for details.
       md5: 3a74997e7716a3024cac41345f37a2a8
       status: identical to FITSH 0.9.4
 
-    index/sort.h
+    algorithms/sort.h
       upstream path: src/index/sort.h
       md5: 95600cdae27a2b7ee51db9efaa9d74d4
       status: identical to FITSH 0.9.4
 
-    index/multiindex.h
+    algorithms/multiindex.h
       upstream path: src/index/multiindex.h
       md5: 2f52f9b9702ccb7cd128b819fc00d396
       status: identical to FITSH 0.9.4
@@ -391,6 +391,31 @@ version 3 or later. See LICENSE for details.
     fiphot/magnitude.h
       upstream path: src/magnitude.h
       md5: f6b945df64559e2bc114808680e6d13c
+      status: identical to FITSH 0.9.4
+
+    lfit/lfit.h
+      upstream path: include/lfit/lfit.h
+      md5: 3f565a14bd24d89d62aa7a4153ff8e6a
+      status: identical to FITSH 0.9.4
+
+    lfit/lfit-builtin.h
+      upstream path: src/lfit-builtin.h
+      md5: 546f86647607fec60896bdaaa8b5347a
+      status: identical to FITSH 0.9.4
+
+    lfit/lfit-info.c
+      upstream path: src/lfit-info.c
+      md5: a13fb2aec4673f1c305cf897465c38b3
+      status: identical to FITSH 0.9.4
+
+    lfit/lfit-info.h
+      upstream path: src/lfit-info.h
+      md5: 33f32f6fd80e37f729a08825ae8e854b
+      status: identical to FITSH 0.9.4
+
+    algorithms/psn/psn.h
+      upstream path: include/psn/psn.h
+      md5: f8a8c7453dc07aa9796f1c79305eec6e
       status: identical to FITSH 0.9.4
 
 
@@ -507,4 +532,29 @@ version 3 or later. See LICENSE for details.
   fitsh.h
     status: modified for pyfitsh
     modification summary: build integration: dead code comment or macro rename
+
+  lfit/lfit.c
+    upstream path: src/lfit.c
+    status: modified for pyfitsh
+    modification summary: file I/O removed; fprint_error/fprint_warning moved to stubs.c; get_gaussian renamed to lfit_get_gaussian; fitout replaced by lfit_result
+
+  lfit/lfit-builtin.c
+    upstream path: src/lfit-builtin.c
+    status: modified for pyfitsh
+    modification summary: header path adaptation; psnlfit_list_builtin_xfuncts added
+
+  algorithms/psn/psn.c
+    upstream path: libpsn/psn.c
+    status: modified for pyfitsh
+    modification summary: header path adaptation
+
+  algorithms/psn/psn-general.c
+    upstream path: src/psn/psn-general.c
+    status: modified for pyfitsh
+    modification summary: header path adaptation
+
+  algorithms/psn/psn-general-ds.c
+    upstream path: src/psn/psn-general-ds.c
+    status: modified for pyfitsh
+    modification summary: header path adaptation
 

@@ -15,7 +15,7 @@
 #include "math/fit/lmfit.h"
 #include "math/poly.h"
 #include "math/point.h"
-#include "link/floodfill.h"
+#include "floodfill.h"
 
 #include "fitsh.h"
 #include "common.h"

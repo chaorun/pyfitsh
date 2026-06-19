@@ -509,3 +509,374 @@ r = fg.apply(img, mask=mask,
 - mask 为 uint8 numpy 数组，0 = 有效像素
 - `decode_maskinfo(hdu)` 读取 FITS 头中 MASKINFO 关键字生成 mask
 - UDF 子表达式 `[...](body)` 仅支持通用函数，不支持图像函数（与 CLI 一致）
+
+---
+
+## Lfit — 通用曲线拟合
+
+完整复刻 origincode `lfit` 命令行工具（除文件 I/O 外），参数名对标 `lfit --long-help`。
+
+### 基本用法
+
+```python
+from pyfitsh.lfit import Lfit, lfit_fit
+import numpy as np
+
+data = np.loadtxt('data.dat')
+
+# 类式 API
+lf = Lfit(method='clls', rejection_niter=3, rejection_level=3.0)
+r = lf.fit(data, variables='a,b', columns='x:1,y:2',
+           function='a+b*x', dependent='y')
+
+# 函数式 API
+r = lfit_fit(data, variables='a,b', columns='x:1,y:2',
+             function='a+b*x', dependent='y')
+
+# 结果访问 (属性模式 + dict 模式均可)
+r.params          # array([1.99992, 3.0])
+r['param_dict']   # {'a': 1.99992, 'b': 3.0}
+r.chi2            # 6.9e-06
+r['nrow']         # 77
+r.ok              # True
+r.keys()          # 所有可用 key
+```
+
+### 回归分析方法 (9种)
+
+| Python `method=` | CLI 参数 | 说明 | 对应 `--long-help` |
+|------------------|----------|------|--------------------|
+| `'clls'` | `-L, --clls, --linear` | 经典线性最小二乘 | 模型函数须可微且线性 |
+| `'nllm'` | `-N, --nllm, --nonlinear` | 非线性 Levenberg-Marquardt | 模型函数须可微，需初始值 `a=1,b=1` |
+| `'lmnd'` | `-U, --lmnd` | Levenberg-Marquardt (数值导数) | 同 NLLM，但偏导数用数值近似，需指定 `differences` |
+| `'dhsx'` | `-D, --dhsx, --downhill` | Downhill simplex | 需初始值+不确定度 `a=1:0.5` 或 `parameters='fisher'` |
+| `'mcmc'` | `-M, --mcmc` | Markov Chain Monte-Carlo | 需初始值+不确定度，不要求可微 |
+| `'mchi'` | `-K, --mchi, --chi2` | Chi2 网格搜索 | 变量用网格语法 `a=[0:1:3]` |
+| `'emce'` | `-E, --emce` | Monte-Carlo 误差估计 | 需指定主方法 `parameters='clls'` 等 |
+| `'xmmc'` | `-X, --xmmc` | 扩展 MCMC | Fisher 协方差转移分布，含 DHSX 初始化 |
+| `'fima'` | `-A, --fima` | Fisher 信息矩阵分析 | 初始值应为"最佳拟合"值 |
+
+### 完整参数对照表 (严格对标 `lfit --long-help`)
+
+#### General options
+
+| CLI 参数 | Python | 说明 |
+|----------|--------|------|
+| `-h, --help` | — | 信息输出，不适用 |
+| `--long-help, --help-long` | — | 信息输出，不适用 |
+| `--wiki-help, --help-wiki` | — | 信息输出，不适用 |
+| `--version, --version-short` | — | 信息输出，不适用 |
+| `--functions, --list-functions` | — | 信息输出，不适用 |
+| `--wiki-functions` | — | 信息输出，不适用 |
+| `--examples` | — | 信息输出，不适用 |
+
+#### Common options for regression analysis
+
+| CLI 参数 | Python | 类型 | 默认值 | 说明 |
+|----------|--------|------|--------|------|
+| `-v, --variable, --variables <list>` | `variables` | str | 必填 | 拟合变量定义。格式：`'a,b'` / `'a=1,b=1,c=0.1'`（含初始值）/ `'a=1:0.5,b=1:0.5'`（含步长）/ `'a,b,c:=0.5'`（含约束） |
+| `-c, --column, --columns <cols>` | `columns` | str | 必填 | 输入列定义。格式：`'x:1,y:2,e:3'`，列号 1-indexed |
+| `-f, --function <func>` | `function` | str | 必填 | 模型函数表达式。可含内建函数、宏、拟合变量、列变量 |
+| `-y, --dependent <expr>` | `dependent` | str/None | None | 因变量表达式。None 时为求值模式（无拟合） |
+| `-o, --output <file>` | — | — | — | 文件 I/O，不适用（结果通过返回值获取） |
+
+#### Common options for function evaluation
+
+| CLI 参数 | Python | 说明 |
+|----------|--------|------|
+| `-f, --function <func>[,...]` | `function` | 同上，求值模式时可逗号分隔多个表达式 |
+| `-o, --output <file>` | — | 文件 I/O，不适用 |
+
+注：`dependent=None` 时自动进入求值模式。
+
+#### Regression analysis methods
+
+| CLI 参数 | Python `method=` | 说明 |
+|----------|------------------|------|
+| `-L, --clls, --linear` | `'clls'` | 经典线性最小二乘。模型函数须可微且线性 |
+| `-N, --nllm, --nonlinear` | `'nllm'` | 非线性 Levenberg-Marquardt。模型函数须可微，需初始值 |
+| `-U, --lmnd` | `'lmnd'` | Levenberg-Marquardt 数值导数。偏导数数值近似，需 `differences` |
+| `-D, --dhsx, --downhill` | `'dhsx'` | Downhill simplex。需初始值+步长 `a=1:0.5`，或 `parameters='fisher'` |
+| `-M, --mcmc` | `'mcmc'` | Markov Chain Monte-Carlo。需初始值+步长，不要求可微 |
+| `-K, --mchi, --chi2` | `'mchi'` | Chi2 网格搜索。变量用网格语法 `a=[0:1:3]`，固定变量 `c=0.5` |
+| `-E, --emce` | `'emce'` | Monte-Carlo 误差估计。需指定主方法 `parameters='clls'` 等 |
+| `-X, --xmmc` | `'xmmc'` | 扩展 MCMC。Fisher 协方差转移分布，含 DHSX 初始化 |
+| `-A, --fima` | `'fima'` | Fisher 信息矩阵分析。初始值应为最佳拟合值 |
+
+#### Fine-tuning of regression analysis methods
+
+| CLI 参数 | Python | 类型 | 默认值 | 说明 |
+|----------|--------|------|--------|------|
+| `-e, --error <expr>` | `error` | str/None | None | 误差/sigma 表达式。0 或负值 → 权重为零 → 丢弃该行 |
+| `-w, --weight <expr>` | `weight` | str/None | None | 权重表达式（= 1/sigma）。与 `error` 互斥 |
+| `-P, --parameters <params>` | `parameters` | str/None | None | 方法微调参数（逗号分隔字符串，见下表） |
+| `-q, --difference <diffs>` | `differences` | str/None | None | LMND 数值偏导数差分步长，如 `'a=0.001,b=0.001'` |
+| `-k, --separate <vars>` | `separate` | str/None | None | 非线性方法中线性子集变量名（逗号分隔） |
+| `--perturbations <noise>` | `perturbations` | str/None | None | EMCE 合成数据集附加白噪声级别，如 `'0.01'` |
+
+#### `-P, --parameters` 支持的全部关键字
+
+| 关键字 | 适用方法 | 说明 |
+|--------|----------|------|
+| `default`, `defaults` | 所有 | 使用默认微调参数 |
+| `clls`, `linear` | EMCE | EMCE 主方法：经典线性最小二乘 |
+| `nllm`, `nonlinear` | EMCE | EMCE 主方法：非线性 LM |
+| `lmnd` | EMCE | EMCE 主方法：LM 数值导数 |
+| `dhsx`, `downhill` | EMCE | EMCE 主方法：downhill simplex |
+| `mc`, `montecarlo` | EMCE / FIMA | EMCE 主方法：原始 MC 扩散；FIMA：生成 mock 高斯分布 |
+| `fisher` | DHSX / EMCE | 从 Fisher 协方差导出初始 simplex 大小 |
+| `skip` | EMCE / XMMC | 跳过初始最小化 |
+| `lambda=<value>` | NLLM / LMND | LM 算法 lambda 初始值 (default 0.001) |
+| `multiply=<value>` | NLLM / LMND | LM 算法 lambda 乘数 (default 10.0) |
+| `iterations=<max>` | NLLM / LMND / XMMC | LM 最大迭代数 (default 10)；XMMC 附加迭代数 |
+| `accepted` | MCMC / XMMC | 计数已接受的转移（默认） |
+| `nonaccepted` | MCMC / XMMC | 计数全部转移（含未接受） |
+| `gibbs` | MCMC | 使用 Gibbs 采样器 |
+| `adaptive` | XMMC | 自适应 XMMC（每次接受后重算 Fisher 协方差） |
+| `window=<size>` | XMMC | 自相关长度窗口大小 (default 16) |
+
+#### Additional parameters for Monte-Carlo analysis
+
+| CLI 参数 | Python | 类型 | 默认值 | 说明 |
+|----------|--------|------|--------|------|
+| `-s, --seed <seed>` | `seed` | int | 0 | 随机种子。0=固定可复现，>0=指定种子，<0=自动（/dev/urandom+系统时间） |
+| `-i, --mcmc-iterations <n>` | `mc_iterations` | int | 1000 | MCMC/EMCE/XMMC/FIMA 的迭代次数 |
+
+#### Clipping outlier data points
+
+| CLI 参数 | Python | 类型 | 默认值 | 说明 |
+|----------|--------|------|--------|------|
+| `-r, --sigma, --rejection-level <level>` | `rejection_level` | float | 3.0 | 拒绝阈值（sigma 单位） |
+| `-n, --iterations <n>` | `rejection_niter` | int | 0 | 最大拒绝迭代次数。0=不做 outlier clipping |
+| `--weighted-sigma` | `weighted_sigma=1` | int | 0 | 计算标准差时按权重加权 |
+| `--no-weighted-sigma` | `weighted_sigma=0` | int | 0 | 不按权重加权（默认） |
+
+仅 CLLS/NLLM/LMND 方法支持 outlier clipping。
+
+#### Multiple data blocks
+
+| CLI 参数 | Python | 说明 |
+|----------|--------|------|
+| `-i<key> <file>` | — | 文件 I/O，不适用。Python 层传入单个 numpy 数组 |
+| `-c<key> <cols>` | — | 多数据块列定义，不适用。当前仅支持单数据块 |
+| `-f<key> <func>` | — | 多数据块模型函数，不适用 |
+| `-y<key> <expr>` | — | 多数据块因变量，不适用 |
+| `-e<key> <err>` | — | 多数据块误差，不适用 |
+| `-w<key> <wgt>` | — | 多数据块权重，不适用 |
+
+#### Constraints
+
+| CLI 参数 | Python | 类型 | 默认值 | 说明 |
+|----------|--------|------|--------|------|
+| `-t, --constraint, --constraints <expr>` | `constraints` | str/None | None | 线性约束表达式（逗号分隔或多次指定） |
+| `-v <name>:=<value>` | 在 `variables` 中使用 `:=` | — | — | 约束语法糖，等价于 `-v name=value -t name=value` |
+
+#### User-defined functions
+
+| CLI 参数 | Python | 类型 | 默认值 | 说明 |
+|----------|--------|------|--------|------|
+| `-x, --define, --macro <def>` | `macros` | list/None | None | 用户宏定义列表。每个元素格式 `'name(params)=expr'`。宏定义中不可引用外部变量 |
+
+#### Dynamically loaded extensions
+
+| CLI 参数 | Python | 说明 |
+|----------|--------|------|
+| `-d, --dynamic <lib:array>` | — | 动态加载扩展库，不适用。Python 层使用内建函数 |
+
+#### More on outputs
+
+| CLI 参数 | Python | 类型 | 默认值 | 说明 |
+|----------|--------|------|--------|------|
+| `--errors, --error-line, --error-columns` | `errdump` | int | 0 | 非零时在结果中包含拟合变量不确定度 |
+| `-F, --format <fmt>` | `format` | str/None | None | 变量输出 printf 格式，如 `'a=%16.10g,b=%16.10g'` (default `%12.6g`) |
+| `-C, --correlation-format <fmt>` | `correlation_format` | str/None | None | 相关系数矩阵格式 (default `%6.3f`) |
+| `-g, --derived-variable[s] <expr>` | `derived_variables` | str/None | None | 派生变量定义，如 `'sum=a+b+c'` |
+| `-z, --columns-output <cols>` | `columns_output` | str/None | None | 求值模式中替换输出的列索引 |
+| `--delta` | `is_dump_delta` | int | 0 | 在输出中写入残差列 |
+| `--delta-comment` | `is_dump_delta` | int | 0 | 同 `--delta`，但残差以注释形式写入 |
+| `--residual` | `resdump` | int | 0 | 在输出中写入最终拟合残差值 |
+| `-u, --output-fitted <file>` | — | — | — | 文件 I/O，不适用 |
+| `-j, --output-rejected <file>` | — | — | — | 文件 I/O，不适用 |
+| `-a, --output-all <file>` | — | — | — | 文件 I/O，不适用 |
+| `-p, --output-expression <file>` | — | — | — | 文件 I/O，不适用 |
+| `-l, --output-variables <file>` | — | — | — | 文件 I/O，不适用 |
+
+#### 内部参数
+
+| Python | 类型 | 默认值 | 说明 |
+|--------|------|--------|------|
+| `force_nonlinear` | int | 0 | 强制非线性求解。通常自动从 method 推导，无需手动设置 |
+
+### 求值模式 (对应 `--long-help` "Common options for function evaluation")
+
+当 `dependent=None` 时，lfit 进入求值模式（无拟合），仅对输入数据计算表达式值：
+
+```python
+r = lfit_fit(data, variables='a,b', columns='x:1,y:2', function='2+3*x')
+```
+
+### 完整示例
+
+```python
+from pyfitsh.lfit import Lfit, lfit_fit
+import numpy as np
+
+# 1. 线性拟合
+data = np.loadtxt('lfit_test_linear.dat')
+r = lfit_fit(data, 'a,b', 'x:1,y:2', 'a+b*x', 'y')
+print(r.params)  # [1.99992, 3.0]
+
+# 2. 二次拟合 + sigma rejection
+data = np.loadtxt('lfit_test_outlier.dat')
+r = lfit_fit(data, 'a,b,c', 'x:1,y:2', 'a+b*x+c*x*x', 'y',
+             rejection_niter=3, rejection_level=3.0)
+print(f'nused={r.nused}/{r.nrow}')  # 75/77
+
+# 3. 带误差权重的拟合
+data = np.loadtxt('lfit_test_weighted.dat')
+r = lfit_fit(data, 'a,b,c', 'x:1,y:2,e:3', 'a+b*x+c*x*x', 'y', error='e')
+
+# 4. 非线性 LM + 自定义宏
+r = lfit_fit(data, 'a=1,b=1,c=0.1', 'x:1,y:2', 'a+b*x+c*x*x', 'y',
+             method='nllm', parameters='iterations=50')
+
+# 5. MCMC
+r = lfit_fit(data, 'a=1:0.2,b=1:0.2,c=0.1:0.1', 'x:1,y:2',
+             'a+b*x+c*x*x', 'y',
+             method='mcmc', parameters='accepted', seed=12345, mc_iterations=20000)
+
+# 6. EMCE 误差估计 (CLLS 主方法)
+r = lfit_fit(data, 'a,b,c', 'x:1,y:2', 'a+b*x+c*x*x', 'y',
+             method='emce', parameters='clls', seed=12345, mc_iterations=2000)
+
+# 7. Fisher 信息矩阵
+r = lfit_fit(data, 'a=1,b=2,c=0.5', 'x:1,y:2', 'a+b*x+c*x*x', 'y',
+             method='fima', derived_variables='sum=a+b+c')
+
+# 8. 星表配对拟合
+pairs = np.loadtxt('lfit_test_pairs.dat')
+r = lfit_fit(pairs, 'a,b,c', 'xr:1,yr:2,xo:3,yo:4,mr:5,mo:6',
+             'a+b*xr+c*yr', 'xo-xr')
+```
+
+### CLI ↔ Python 复杂对照示例
+
+**示例 A：LMND + 差分步长 + 自定义宏 + 约束固定变量**
+
+```bash
+# CLI
+lfit -U -v a=1,b=1,c:=0.5 -c x:1,y:2 \
+  -x "poly(a,b,c,t)=a+b*t+c*t*t" \
+  -f "poly(a,b,c,x)" -y "y" \
+  -q a=0.001,b=0.001 \
+  -P iterations=50 \
+  data.dat -o result.out
+```
+
+```python
+# Python
+r = lfit_fit(data,
+    variables='a=1,b=1,c:=0.5',
+    columns='x:1,y:2',
+    function='poly(a,b,c,x)',
+    dependent='y',
+    method='lmnd',
+    macros=['poly(a,b,c,t)=a+b*t+c*t*t'],
+    differences='a=0.001,b=0.001',
+    parameters='iterations=50')
+print(r.param_dict)  # {'a': 1.0, 'b': 2.0, 'c': 0.5}
+```
+
+**示例 B：XMMC 加权拟合 + 自适应 + 窗口 + 派生变量**
+
+```bash
+# CLI
+lfit -X -v a=1:0.2,b=1:0.2,c=0.1:0.1 \
+  -c x:1,y:2,e:3 -f "a+b*x+c*x*x" -y "y" -e "e" \
+  -P adaptive,window=20 \
+  -g "sum=a+b+c" \
+  -s 12345 -i 10000 \
+  weighted.dat -o result.out
+```
+
+```python
+# Python (类式 API)
+lf = Lfit(method='xmmc',
+          parameters='adaptive,window=20',
+          seed=12345, mc_iterations=10000,
+          derived_variables='sum=a+b+c')
+r = lf.fit(data,
+    variables='a=1:0.2,b=1:0.2,c=0.1:0.1',
+    columns='x:1,y:2,e:3',
+    function='a+b*x+c*x*x',
+    dependent='y', error='e')
+print(r['params'], r['nrow'])
+```
+
+**示例 C：EMCE 误差估计 + DHSX 主方法 + 扰动 + sigma rejection**
+
+```bash
+# CLI
+lfit -E -v a=1:0.5,b=1:0.5,c=0.1:0.1 \
+  -c x:1,y:2 -f "a+b*x+c*x*x" -y "y" \
+  -P dhsx --perturbations 0.01 \
+  -r 3 -n 3 \
+  -s 12345 -i 2000 --errors \
+  outlier.dat -o result.out
+```
+
+```python
+# Python
+r = lfit_fit(data,
+    variables='a=1:0.5,b=1:0.5,c=0.1:0.1',
+    columns='x:1,y:2',
+    function='a+b*x+c*x*x',
+    dependent='y',
+    method='emce',
+    parameters='dhsx',
+    perturbations='0.01',
+    rejection_niter=3, rejection_level=3.0,
+    seed=12345, mc_iterations=2000,
+    errdump=1)
+print(r.params, r.errors)
+```
+
+### 返回值 (LfitResult)
+
+| 属性/key | 类型 | 说明 |
+|----------|------|------|
+| `params` | ndarray | 拟合参数值 |
+| `errors` | ndarray | 参数不确定度 |
+| `chi2` | float | 拟合残差 chi2 |
+| `nrow` | int | 总数据行数 |
+| `nused` | int | 实际使用行数 (rejected 后) |
+| `nrejected` | int | 被拒绝行数 (= nrow - nused) |
+| `residual_sigma` | float | 残差标准差 |
+| `ok` | bool | 拟合是否成功 |
+| `param_dict` | dict | {变量名: 值} |
+| `variables` | list | 变量名列表 |
+| `used_mask` | list | 每行是否被使用 |
+| `chain` | ndarray/None | MC 链 (nstep x nvar) |
+| `error_code` | int | 错误码 (0=成功) |
+| `error_msg` | str | 错误信息 |
+
+支持属性访问 (`r.params`) 和 dict 访问 (`r['params']`)，以及 `r.keys()`、`r.items()` 遍历。
+
+### 测试覆盖
+
+对标 origincode 3 个测试脚本，全部 47/47 PASS：
+
+| 脚本 | 测试数 | 结果 |
+|------|--------|------|
+| test_lfit.sh | 19 | 19/19 PASS |
+| test_lfit_montecarlo.sh | 19 | 19/19 PASS |
+| longtest_lfit.sh | 9 | 9/9 PASS |
+
+### 性能 (-O3 编译)
+
+pairs MCMC 20000 iterations 对比：
+
+| 版本 | 时间 | 相对 C 原版 |
+|------|------|------------|
+| C 原版 (-O2) | 221s / 236s | 1.00x |
+| Cython -O3 | 211s / 221s | 0.95x (快 5%) |

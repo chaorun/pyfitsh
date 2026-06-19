@@ -17,7 +17,7 @@
 #include "math/point.h"
 #include "math/tpoint.h"
 #include "math/delaunay.h"
-#include "link/linkpoint.h"
+#include "linkpoint.h"
 
 #include "statistics.h"
 #include "tensor.h"

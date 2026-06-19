@@ -72,3 +72,29 @@ int fits_bintable_check_fields(void *a)
 
 int fits_table_add_column(void *a, void *b)
 { (void)a; (void)b; return 0; }
+
+/* --- fprint_error / fprint_warning (common to lfit, fiphot, fistar, ficalib, grmatch) --- */
+
+static char *progbasename = "pyfitsh";
+
+int fprint_error(char *expr,...)
+{
+ va_list	ap;
+ fprintf(stderr,"%s: error: ",progbasename);
+ va_start(ap,expr);
+ vfprintf(stderr,expr,ap);
+ va_end(ap);
+ fprintf(stderr,"\n");
+ return(0);
+}
+
+int fprint_warning(char *expr,...)
+{
+ va_list	ap;
+ fprintf(stderr,"%s: warning: ",progbasename);
+ va_start(ap,expr);
+ vfprintf(stderr,expr,ap);
+ va_end(ap);
+ fprintf(stderr,"\n");
+ return(0);
+}

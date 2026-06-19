@@ -84,8 +84,8 @@ typedef struct {
 extern int   is_verbose, is_comment;
 extern char *progbasename;
 
-int  fprint_error(char *expr, ...);
-int  fprint_warning(char *expr, ...);
+// int  fprint_error(char *expr, ...);
+// int  fprint_warning(char *expr, ...);
 
 int  colinfo_reset(colinfo *col);
 int  normalize_columns(colinfo *col, char *strcolcoord, char *strcolid);

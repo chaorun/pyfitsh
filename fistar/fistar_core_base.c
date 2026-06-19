@@ -18,7 +18,7 @@
 #include "math/fit/lmfit.h"
 #include "math/poly.h"
 #include "statistics.h"
-#include "index/sort.h"
+#include "sort.h"
 
 #include "stars.h"
 #include "psf.h"
@@ -26,9 +26,9 @@
 #include "psf-determine.h"
 #include "psf-io.h"
 #include "magnitude.h"
-#include "link/linkpoint.h"
-#include "link/floodfill.h"
-#include "link/linkblock.h"
+#include "linkpoint.h"
+#include "floodfill.h"
+#include "linkblock.h"
 
 #include "fistar.h"
 #include "fistar_core.h"
@@ -37,8 +37,9 @@
 
 extern int	is_verbose, is_comment;
 extern char	*progbasename;
-extern int fprint_error(char *expr,...);
-extern int fprint_warning(char *expr,...);
+// extern int fprint_error(char *expr,...);
+// extern int fprint_warning(char *expr,...);
+#include "stubs.h"
 
 int fprint_info(char *expr,...)
 {

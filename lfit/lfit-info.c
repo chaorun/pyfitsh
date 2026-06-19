@@ -14,7 +14,7 @@
 #include "fitsh.h"
 #include "longhelp.h"
 
-#include "lfit.h"
+#include <lfit/lfit.h>
 
 #include "lfit-info.h"
 

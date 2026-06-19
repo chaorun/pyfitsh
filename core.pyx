@@ -10,13 +10,14 @@ from libc.stdlib cimport malloc, free
 from libc.string cimport memset, memcpy
 # from libc.stdio cimport FILE, fopen, fwrite, fclose  # dump helper
 include "grmatch/grmatch_result.pxi"
-include "wcs/wcs.pxi"
-include "polyfit/polyfit.pxi"
+include "algorithms/wcs.pxi"
+include "algorithms/polyfit/polyfit.pxi"
 include "ficonv/ficonv_internals.pxi"
 include "fitrans/fitrans_internals.pxi"
 include "fiphot/fiphot_internals.pxi"
 include "firandom/firandom_internals.pxi"
 include "algorithms/utils.pxi"
+include "lfit/lfit_internals.pxi"
 
 
 cdef class Grmatch:

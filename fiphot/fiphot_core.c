@@ -48,27 +48,29 @@
 int	is_verbose,is_comment;
 char	*progbasename;
 
-int fprint_error(char *expr,...)
-{
- va_list	ap;
- fprintf(stderr,"%s: error: ",progbasename);
- va_start(ap,expr);
- vfprintf(stderr,expr,ap);
- va_end(ap);
- fprintf(stderr,"\n");
- return(0);
-}
+#include "stubs.h"
 
-int fprint_warning(char *expr,...)
-{
- va_list	ap;
- fprintf(stderr,"%s: warning: ",progbasename);
- va_start(ap,expr);
- vfprintf(stderr,expr,ap);
- va_end(ap);
- fprintf(stderr,"\n");
- return(0);
-}
+// int fprint_error(char *expr,...)
+// {
+//  va_list	ap;
+//  fprintf(stderr,"%s: error: ",progbasename);
+//  va_start(ap,expr);
+//  vfprintf(stderr,expr,ap);
+//  va_end(ap);
+//  fprintf(stderr,"\n");
+//  return(0);
+// }
+// 
+// int fprint_warning(char *expr,...)
+// {
+//  va_list	ap;
+//  fprintf(stderr,"%s: warning: ",progbasename);
+//  va_start(ap,expr);
+//  vfprintf(stderr,expr,ap);
+//  va_end(ap);
+//  fprintf(stderr,"\n");
+//  return(0);
+// }
 
 /*****************************************************************************/
 

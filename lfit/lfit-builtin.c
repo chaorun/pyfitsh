@@ -16,9 +16,9 @@
 #if defined     _CHDET_SOURCE
 	#include "psn.h"
 #elif defined   _FITSH_SOURCE
-	#include "psn.h"
+	#include <psn/psn.h>
 #else
-	#include "psn.h"
+	#include <psn/psn.h>
 #endif
 
 #if defined   _FITSH_SOURCE
@@ -33,7 +33,7 @@
 	#include "xfunct.h"
 #endif
 
-#include "lfit.h"
+#include <lfit/lfit.h>
 
 #include "lfit-builtin.h"
 
