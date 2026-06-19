@@ -193,4 +193,25 @@ def lfit_fit(data,
     if chain_buf != NULL:
         free(chain_buf)
 
+    if result.cov_matrix != NULL and nvar_fit > 0:
+        cov_rows = []
+        for i in range(nvar_fit):
+            if result.cov_matrix[i] != NULL:
+                cov_rows.append([result.cov_matrix[i][j] for j in range(nvar_fit)])
+                free(result.cov_matrix[i])
+        free(result.cov_matrix)
+        if len(cov_rows) == nvar_fit:
+            out['cov_matrix'] = np.array(cov_rows)
+        else:
+            out['cov_matrix'] = None
+    else:
+        out['cov_matrix'] = None
+
+    if result.eval_data != NULL and result.eval_nrow > 0 and result.eval_ncol > 0:
+        eval_list = [result.eval_data[i] for i in range(result.eval_nrow * result.eval_ncol)]
+        out['eval_data'] = np.array(eval_list).reshape(result.eval_nrow, result.eval_ncol)
+        free(result.eval_data)
+    else:
+        out['eval_data'] = None
+
     return out

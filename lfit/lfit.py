@@ -29,6 +29,8 @@ class LfitResult:
         self.acceptance = raw.get('acceptance', 0.0)
         self.used_mask = raw.get('used_mask', [])
         self.chain = raw.get('chain', None)
+        self.cov_matrix = raw.get('cov_matrix', None)
+        self.eval_data = raw.get('eval_data', None)
         self.return_code = raw.get('return_code', -1)
         self.error_code = raw.get('error_code', -1)
         self.error_msg = raw.get('error_msg', '')
@@ -54,6 +56,16 @@ class LfitResult:
             return dict(zip(vnames, self.params))
         return {}
 
+    @property
+    def corr_matrix(self):
+        if self.cov_matrix is None:
+            return None
+        cov = self.cov_matrix
+        n = cov.shape[0]
+        diag = np.sqrt(np.diag(cov))
+        diag[diag == 0] = 1.0
+        return cov / np.outer(diag, diag)
+
     def to_dict(self):
         out = dict(self.raw)
         out['meta'] = self.meta
@@ -62,6 +74,7 @@ class LfitResult:
     KEYS = (
         'params', 'errors', 'chi2', 'nrow', 'nused',
         'residual_sigma', 'acceptance', 'used_mask', 'chain',
+        'cov_matrix', 'corr_matrix', 'eval_data',
         'return_code', 'error_code', 'error_msg',
         'ok', 'nrejected', 'variables', 'param_dict', 'meta',
     )

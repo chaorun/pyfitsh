@@ -33,6 +33,9 @@ typedef struct
 	double	acceptance;
 	double	**cov_matrix;
 	double	**corr_matrix;
+	double	*eval_data;
+	int	eval_nrow;
+	int	eval_ncol;
 	int	error_code;
 	char	error_msg[256];
  } lfit_result;
@@ -2072,6 +2075,13 @@ int lfit_python_apply(
  result->chain_count=0;
  result->nvar_chain=nvar+1;
 
+ if ( fit_method==FIT_METHOD_FIMA || fit_method==FIT_METHOD_XMMC )
+  {	int ci;
+	result->cov_matrix=(double **)calloc(nvar>0?nvar:1,sizeof(double *));
+	for ( ci=0 ; ci<nvar ; ci++ )
+		result->cov_matrix[ci]=(double *)calloc(nvar>0?nvar:1,sizeof(double));
+  }
+
  result->params=(double *)calloc(nvar>0?nvar:1,sizeof(double));
  result->errors=(double *)calloc(nvar>0?nvar:1,sizeof(double));
  result->used_mask=(int *)calloc(nrow_in>0?nrow_in:1,sizeof(int));
@@ -2120,7 +2130,36 @@ int lfit_python_apply(
 	 }
   }
  else
-  {	r=0;
+  {	double		*eval_wvars;
+	fitinputrow	eval_fir;
+	fitfunctdata	eval_ffd;
+
+	eval_wvars=(double *)calloc(nvar+lf->maxncol,sizeof(double));
+
+	eval_ffd.nvar=nvar;
+	eval_ffd.wvars=eval_wvars;
+	eval_ffd.functs=lpg.pl_funct;
+	eval_ffd.lf=lf;
+
+	result->eval_ncol=1;
+	result->eval_nrow=nrow_in;
+	result->eval_data=(double *)calloc(nrow_in>0?nrow_in:1,sizeof(double));
+	result->nrow=nrow_in;
+
+	for ( i=0 ; i<nrow_in ; i++ )
+	 {	for ( j=0 ; j<ncol_in && j<lf->maxncol ; j++ )
+			eval_wvars[nvar+j]=array_data[i*ncol_in+j];
+
+		memset(&eval_fir,0,sizeof(fitinputrow));
+		eval_fir.x=&eval_wvars[nvar];
+		eval_fir.dbidx=0;
+
+		fit_function((void *)&eval_fir,NULL,
+			&result->eval_data[i],NULL,&eval_ffd);
+	 }
+
+	free(eval_wvars);
+	r=0;
 	result->error_code=0;
   }
 

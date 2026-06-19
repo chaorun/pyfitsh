@@ -16,6 +16,9 @@ typedef struct
 	double	acceptance;
 	double	**cov_matrix;
 	double	**corr_matrix;
+	double	*eval_data;
+	int	eval_nrow;
+	int	eval_ncol;
 	int	error_code;
 	char	error_msg[256];
  } lfit_result;
