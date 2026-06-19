@@ -2131,31 +2131,26 @@ int lfit_python_apply(
   }
  else
   {	double		*eval_wvars;
-	fitinputrow	eval_fir;
-	fitfunctdata	eval_ffd;
+	int		eval_ncol_out;
+
+	eval_ncol_out = (db->funct != NULL && db->funct->nseq > 0) ? db->funct->nseq : 1;
 
 	eval_wvars=(double *)calloc(nvar+lf->maxncol,sizeof(double));
 
-	eval_ffd.nvar=nvar;
-	eval_ffd.wvars=eval_wvars;
-	eval_ffd.functs=lpg.pl_funct;
-	eval_ffd.lf=lf;
-
-	result->eval_ncol=1;
+	result->eval_ncol=eval_ncol_out;
 	result->eval_nrow=nrow_in;
-	result->eval_data=(double *)calloc(nrow_in>0?nrow_in:1,sizeof(double));
+	result->eval_data=(double *)calloc(nrow_in>0?nrow_in*eval_ncol_out:1,sizeof(double));
 	result->nrow=nrow_in;
 
 	for ( i=0 ; i<nrow_in ; i++ )
-	 {	for ( j=0 ; j<ncol_in && j<lf->maxncol ; j++ )
+	 {	for ( j=0 ; j<nvar ; j++ )
+			eval_wvars[j]=vars[j].init;
+		for ( j=0 ; j<ncol_in && j<lf->maxncol ; j++ )
 			eval_wvars[nvar+j]=array_data[i*ncol_in+j];
 
-		memset(&eval_fir,0,sizeof(fitinputrow));
-		eval_fir.x=&eval_wvars[nvar];
-		eval_fir.dbidx=0;
-
-		fit_function((void *)&eval_fir,NULL,
-			&result->eval_data[i],NULL,&eval_ffd);
+		if ( db->funct != NULL )
+			lfit_psn_double_calc(db->funct,db->fchain,lpg.pl_funct,
+				&result->eval_data[i*eval_ncol_out],eval_wvars);
 	 }
 
 	free(eval_wvars);

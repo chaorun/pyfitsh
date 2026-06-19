@@ -151,7 +151,7 @@ lfit_fit(data,
 
 | 脚本 | 测试数 | 内容 | 结果 |
 |------|--------|------|------|
-| test_lfit.sh | 19 | CLLS/NLLM/LMND/DHSX/chi2grid/eval/macro/constraint/pairs | 18/19 PASS, 1 SKIP |
+| test_lfit.sh | 19 | CLLS/NLLM/LMND/DHSX/chi2grid/eval/macro/constraint/pairs | 19/19 PASS |
 | test_lfit_montecarlo.sh | 19 | MCMC/XMMC/EMCE/FIMA (chain逐行对比 + Fisher矩阵) | 19/19 PASS |
 | longtest_lfit.sh | 9 | 长迭代 MCMC/XMMC/EMCE/FIMA (20000 iterations) | 7/9 PASS, 2 DIFF (CLI精度截断) |
 
@@ -170,7 +170,7 @@ setup.py 使用 `-O3` 编译优化级别。性能对比 (pairs MCMC 20000 iterat
 ## 版本
 
 2026-06-19 快照。复刻 fitsh 0.9.4 行为，遵循原始设计约束：
-- 新增 `lfit` 模块：通用曲线拟合，9 种方法 + eval 模式，chain/cov_matrix/corr_matrix 自动返回，44/47 测试 PASS
+- 新增 `lfit` 模块：通用曲线拟合，9 种方法 + eval 模式，chain/cov_matrix/corr_matrix 自动返回，45/47 测试 PASS
 - 编译优化从 `-O0` 升级为 `-O3`，性能与 C 原版持平
 - 新增 `ficalib` 模块：图像校准（bias/flat/dark），12/12 测试 PASS
 - 新增 `fiign` 模块：像素 mask 操作（宇宙线、饱和、几何 mask、mask 转换），13/13 测试 PASS

@@ -872,7 +872,7 @@ print(r.params, r.errors)
 
 | 脚本 | 测试数 | 对比方式 | 结果 |
 |------|--------|---------|------|
-| test_lfit.sh | 19 | params 逐值对比 | 18/19 PASS, 1 SKIP (多表达式 eval) |
+| test_lfit.sh | 19 | params 逐值对比 | 19/19 PASS |
 | test_lfit_montecarlo.sh | 19 | chain 逐行对比 + FIMA params/errors/corr | 19/19 PASS |
 | longtest_lfit.sh | 9 | chain 逐行对比 + FIMA | 7/9 PASS, 2 DIFF (CLI 精度截断) |
 
