@@ -35,6 +35,7 @@ pyfitsh/
 ├── ficalib/          # 图像校准 (bias/flat/dark)
 ├── fiign/            # 像素 mask 操作
 ├── lfit/             # 通用曲线拟合 (9种方法 + eval模式, chain/cov_matrix自动返回)
+├── gropt/            # 几何光学计算 (光线追踪/spot/PSF/传输矩阵/SCAD/EPS)
 ├── psn/              # PSN 表达式解析器
 ├── grmatch/          # 星点匹配
 ├── grtrans/          # 坐标变换
@@ -145,15 +146,37 @@ lfit_fit(data,
 )
 ```
 
+## Gropt 模块
+
+几何光学计算工具，完整复刻 origincode `gropt` 的光线追踪、spot diagram、PSF、传输矩阵分析和几何导出功能。无 FILE I/O，独立 Cython Extension。
+
+```python
+from pyfitsh.gropt import Optics
+
+opt = Optics.from_string("""
+glass BK7 1.5168
+lens 0 5 25 +1/100 -1/100 BK7 - -
+focal 100
+""")
+
+opt.transfer(wavelength=0.6)          # → dict {focal_plane, effective_focus}
+opt.spot(wavelength=0.55, aperture_radius=10, nrings=3, pixel_scale=0.01)  # → ndarray(n,2)
+opt.psf(wavelength=0.55, aperture_radius=10, half_size=3, pixel_scale=0.01)  # → ndarray(7,7)
+opt.raytrace(0.6, 0, 5, -0.001, 0, 0, 1)  # → ndarray(npts,3)
+opt.to_openscad()                     # → str (OpenSCAD 3D 模型)
+opt.to_eps(aperture_radius=10, nrings=3, wavelength=0.55)  # → str (EPS 平面图)
+```
+
 ### 测试覆盖
 
-对标 origincode 的 3 个测试脚本，全部 47 个测试通过：
+对标 origincode 测试脚本：
 
 | 脚本 | 测试数 | 内容 | 结果 |
 |------|--------|------|------|
 | test_lfit.sh | 19 | CLLS/NLLM/LMND/DHSX/chi2grid/eval/macro/constraint/pairs | 19/19 PASS |
 | test_lfit_montecarlo.sh | 19 | MCMC/XMMC/EMCE/FIMA (chain逐行对比 + Fisher矩阵) | 19/19 PASS |
 | longtest_lfit.sh | 9 | 长迭代 MCMC/XMMC/EMCE/FIMA (20000 iterations) | 7/9 PASS, 2 DIFF (CLI精度截断) |
+| test_gropt.sh | 15 | transfer/spot/PSF/EPS/SCAD/twolens 对比 | 15/15 PASS |
 
 ## 编译优化 (-O3)
 
@@ -170,6 +193,7 @@ setup.py 使用 `-O3` 编译优化级别。性能对比 (pairs MCMC 20000 iterat
 ## 版本
 
 2026-06-19 快照。复刻 fitsh 0.9.4 行为，遵循原始设计约束：
+- 新增 `gropt` 模块：几何光学计算，独立 Cython Extension，7 功能（transfer/spot/psf/raytrace/scad/eps），15/15 测试 PASS，无 FILE I/O
 - 新增 `lfit` 模块：通用曲线拟合，9 种方法 + eval 模式，chain/cov_matrix/corr_matrix 自动返回，45/47 测试 PASS
 - 编译优化从 `-O0` 升级为 `-O3`，性能与 C 原版持平
 - 新增 `ficalib` 模块：图像校准（bias/flat/dark），12/12 测试 PASS

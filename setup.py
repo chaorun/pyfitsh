@@ -40,6 +40,7 @@ FIRANDOM = os.path.join(HERE, "firandom")
 FIARITH  = os.path.join(HERE, "fiarith")
 PSN_DIR  = os.path.join(HERE, "algorithms", "psn")
 DFT_DIR  = os.path.join(MATH, "dft")
+GROPT    = os.path.join(HERE, "gropt")
 # 所有 C 源码文件 (核心 + 数学库 + 样条 + 投影 + 图像变换 + kernel + 星检测)
 sources = [
     "grmatch/grmatch_core.c",
@@ -154,6 +155,21 @@ fiarith_ext = Extension(
     language="c",
 )
 
+# gropt Cython extension (geometrical optics, standalone)
+gropt_ext = Extension(
+    name="pyfitsh.gropt_core",
+    sources=[os.path.join(GROPT, "gropt_core.pyx"),
+             os.path.join(GROPT, "optcalc.c"),
+             os.path.join(GROPT, "gropt_interface.c"),
+             os.path.join(MATH, "matrixvector.c"),
+             os.path.join(MATH, "polygon.c"),
+             os.path.join(HERE, "algorithms", "tokenize.c")],
+    include_dirs=[np.get_include(), HERE, MATH, GROPT,
+                  os.path.join(HERE, "algorithms")],
+    extra_compile_args=["-O3"],
+    language="c",
+)
+
 setup(
     name="pyfitsh",
     version="0.01",
@@ -162,7 +178,7 @@ setup(
         "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
     ],
     ext_modules=cythonize(
-        [ext, fiarith_ext],
+        [ext, fiarith_ext, gropt_ext],
         compiler_directives={"language_level": "3"},
     ),
     zip_safe=False,

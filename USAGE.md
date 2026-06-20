@@ -868,7 +868,7 @@ print(r.params, r.errors)
 
 ### 测试覆盖
 
-对标 origincode 3 个测试脚本：
+对标 origincode 测试脚本：
 
 | 脚本 | 测试数 | 对比方式 | 结果 |
 |------|--------|---------|------|
@@ -884,3 +884,125 @@ pairs MCMC 20000 iterations 对比：
 |------|------|------------|
 | C 原版 (-O2) | 221s / 236s | 1.00x |
 | Cython -O3 | 211s / 221s | 0.95x (快 5%) |
+
+---
+
+## Gropt — 几何光学计算
+
+完整复刻 origincode `gropt` 命令行工具的光线追踪、光斑图分析、PSF 计算、传输矩阵分析和几何导出功能。独立 Cython Extension，无 FILE I/O。
+
+### 输入格式（.opt 描述文件）
+
+```text
+# 注释行
+glass <name> <n>                              # 常数折射率
+glass <name> <B1:C1:B2:C2:B3:C3>              # Sellmeier 系数
+lens <offset> <thickness> <r1>[:<r2>] <curv1> <curv2> <glass> [<asph1> <asph2>]
+focal <z_position>
+```
+
+曲率支持格式：`+1/100`（正曲率 1/R）、`-1/200`、`0`（平面）
+
+### API 用法
+
+```python
+from pyfitsh.gropt import Optics
+
+opt = Optics.from_string("""
+glass BK7 1.5168
+lens 0 5 25 +1/100 -1/100 BK7 - -
+focal 100
+""")
+
+opt.nglass       # 1
+opt.nlens        # 1
+opt.z_focal      # 100.0
+opt.z_focal = 120  # override 焦平面位置
+```
+
+### 功能一览
+
+| 方法 | CLI 对应 | 返回类型 | 说明 |
+|------|----------|----------|------|
+| `opt.transfer(wavelength)` | `-t` | dict | 传输矩阵分析 |
+| `opt.spot(wavelength, ...)` | `-s -o` | dict(spots=ndarray) | 光斑图分析 |
+| `opt.psf(wavelength, ...)` | `-z -p` | ndarray(2H+1, 2H+1) | 点扩散函数 |
+| `opt.raytrace(wavelength, x,y,z, nx,ny,nz)` | — | ndarray(npts, 3) | 单光线追踪路径 |
+| `opt.to_openscad()` | `-d` | str | OpenSCAD 3D 模型 |
+| `opt.to_eps(...)` | `-e` | str | EPS 平面图 |
+
+### 传输矩阵分析
+
+```python
+tm = opt.transfer(wavelength=0.6)
+# {'focal_plane': 11167.3, 'effective_focus': 11358.3}
+```
+
+### 光斑图分析
+
+```python
+r = opt.spot(
+    wavelength=0.55,         # -l  波长（微米）
+    aperture_radius=10.0,    # -s  孔径半径（mm）
+    nrings=3,                # -s  环数
+    pixel_scale=0.01,        # -x  像素尺度（mm）
+    angle=0.01,              # -a  入射角（弧度，标量）
+    angle_xy=(0.0, 0.01),    # -a  入射角（法线分量，二选一）
+    zstart=0.0,              # -s  孔径偏移
+)
+r['spots']      # ndarray(n, 2)  光斑坐标
+r['center_x']   # float  参考中心 x
+r['center_y']   # float  参考中心 y
+```
+
+### PSF 计算
+
+```python
+psf = opt.psf(
+    wavelength=0.55,
+    aperture_radius=10.0,
+    half_size=3,             # -z  半尺寸 → (2H+1)x(2H+1) = 7x7
+    pixel_scale=0.01,        # -x
+    angle=0.0,               # -a
+)
+# ndarray(7, 7)
+```
+
+### 光线追踪路径
+
+```python
+trace = opt.raytrace(
+    wavelength=0.6,
+    x0=0, y0=5, z0=-0.001,   # 起点
+    nx=0, ny=0, nz=1,        # 方向
+)
+# ndarray(npoints, 3)  每行 (x, y, z)
+```
+
+### 几何导出
+
+```python
+scad = opt.to_openscad()
+with open("system.scad", "w") as f:
+    f.write(scad)
+
+eps = opt.to_eps(
+    aperture_radius=10, nrings=3,
+    wavelength=0.55, pixel_scale=0.01,
+)
+with open("system.eps", "w") as f:
+    f.write(eps)
+```
+
+### 测试覆盖
+
+对标 origincode test_gropt.sh，15 项测试：
+
+| 编号 | 测试 | max_diff | 结果 |
+|------|------|----------|------|
+| 00 | parse min.opt | — | PASS |
+| 01 | transfer | 7.74e-04 | PASS |
+| 02-07 | spot (basic/offset/angle/focus/lambda) | ≤3.44e-03 | 6/6 PASS |
+| 08-09 | EPS/SCAD export | 非空 | PASS |
+| 10-11 | PSF 7x7 / 11x11 | 4.33e-11 | PASS |
+| 13-15 | twolens (parse/transfer/spot) | ≤3.22e-03 | 3/3 PASS |
